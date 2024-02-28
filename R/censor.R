@@ -8,9 +8,10 @@
 #'
 #' @return The return value, if any, from executing the function.
 #' @examples
-#' data(censored_data)
-#' uncensored(censored_data)
-#' 
+#' \dontrun{
+#'  data(censored_data)
+#'  uncensored(censored_data)
+#' }
 uncensored <- function(df = NULL, cols = c(NULL), keep_cens = TRUE) {
   if (!is.data.frame(df)) cli::cli_abort("df must be a dataframe")
   if (!all(cols %in% names(df))) cli::cli_abort("Some columns are not present in the data.frame")

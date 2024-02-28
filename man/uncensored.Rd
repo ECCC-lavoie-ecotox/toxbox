@@ -11,7 +11,7 @@ uncensored(df = NULL, cols = c(NULL), keep_cens = TRUE)
 
 \item{cols}{a vector of character.}
 
-\item{keep_cens}{a boolean. If TRUE, assigns the logicical test result (presence of absence of symbol <) to a new column}
+\item{keep_cens}{a boolean. If TRUE, assigns the logicical test result (presence or absence of symbol <) to a new column called {.col}_censored}
 }
 \value{
 The return value, if any, from executing the function.
@@ -21,9 +21,7 @@ For each column specified, censored data are detected by the presence of the sym
 }
 \examples{
 \dontrun{
-custom_render("report1",
-  data = list(title = "templex"),
-  envir = list(geom = 1)
-)
+ data(censored_data)
+ uncensored(censored_data)
 }
 }

@@ -3,7 +3,7 @@
 \docType{data}
 \name{censored_data}
 \alias{censored_data}
-\title{Censored data exemple}
+\title{Censored data example}
 \format{
 An object of class \code{data.frame} with 10 rows and 2 columns.
 }
@@ -11,6 +11,6 @@ An object of class \code{data.frame} with 10 rows and 2 columns.
 censored_data
 }
 \description{
-A simple data.frame which contains exemples of censored data
+A simple data.frame which contains examples of censored data
 }
 \keyword{datasets}
