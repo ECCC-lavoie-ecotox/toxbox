@@ -1,5 +1,5 @@
-#' Censored data exemple
+#' Censored data example
 #'
-#' A simple data.frame which contains exemples of censored data
+#' A simple data.frame which contains examples of censored data
 #'
 "censored_data"

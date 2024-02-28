@@ -2,7 +2,7 @@
 
 [![R-CMD-Check](https://github.com/ECCC-lavoie-ecotox/toxbox/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ECCC-lavoie-ecotox/toxbox/actions/workflows/R-CMD-check.yaml)
 
-toxbox gathers miscellaneous utils for data processing and predictive modelling in order to spend more time on the field.
+toxbox gathers miscellaneous utils for data processing and statistical modelling in order to spend more time on the field.
 
 ## Installation
 
