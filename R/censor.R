@@ -15,7 +15,6 @@
 #' )
 #' }
 uncensored <- function(df = NULL, cols = c(NULL), keep_cens = TRUE) {
-
   if (!is.data.frame(df)) cli::cli_abort("df must be a dataframe")
   if (!all(cols %in% names(df))) cli::cli_abort("Some specified columns")
 
