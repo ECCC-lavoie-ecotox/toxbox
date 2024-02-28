@@ -1,9 +1,8 @@
-
-# toxbox
+# toxbox <img src="man/figures/logo.png" width="130" align="right"/>
 
 [![R-CMD-Check](https://github.com/ECCC-lavoie-ecotox/toxbox/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ECCC-lavoie-ecotox/toxbox/actions/workflows/R-CMD-check.yaml)
 
-The goal of toxbox is to ...
+toxbox gathers miscellaneous utils for data processing and predictive modelling in order to spend more time on the field.
 
 ## Installation
 
