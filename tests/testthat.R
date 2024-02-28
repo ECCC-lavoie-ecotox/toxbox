@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(contaminR)
+library(toxbox)
 
-test_check("contaminR")
+test_check("toxbox")
