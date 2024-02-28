@@ -1,4 +1,4 @@
-# toxbox <img src="man/figures/logo.png" width="150" align="right"/>
+# toxbox <img src="man/figures/logo.png" width="200" align="right"/>
 
 [![R-CMD-Check](https://github.com/ECCC-lavoie-ecotox/toxbox/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ECCC-lavoie-ecotox/toxbox/actions/workflows/R-CMD-check.yaml)
 
