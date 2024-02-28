@@ -2,22 +2,22 @@
 % Please edit documentation in R/censor.R
 \name{uncensored}
 \alias{uncensored}
-\title{Detect censored data}
+\title{Manage censored data}
 \usage{
 uncensored(df = NULL, cols = c(NULL), keep_cens = TRUE)
 }
 \arguments{
-\item{template}{a template. Use "?" to list available template.}
+\item{df}{a data.frame.}
 
-\item{data}{data passed to \code{\link[whisker:whisker.render]{whisker::whisker.render()}}.}
+\item{cols}{a vector of character.}
 
-\item{...}{further arguments passed to \code{\link[rmarkdown:render]{rmarkdown::render()}}.}
+\item{keep_cens}{a boolean. If TRUE, assigns the logicical test result (presence of absence of symbol <) to a new column}
 }
 \value{
 The return value, if any, from executing the function.
 }
 \description{
-For each column specified, censored data are detected by the presence of the symbol \link{<} . This function returned a data.frame with two columns by
+For each column specified, censored data are detected by the presence of the symbol \link{<} . This function removes all censored data in the specified columns. keep_cens=TRUE assigns the logicical test result (presence of absence of symbol <) to a new column, to keep track of the original censored data.
 }
 \examples{
 \dontrun{

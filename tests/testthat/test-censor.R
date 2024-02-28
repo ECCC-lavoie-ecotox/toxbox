@@ -21,7 +21,7 @@ test_that("Check if data censored test results are presents", {
   res1 <- uncensored(test_df, cols = c("pcb_87", "pcb_92"), keep_cens = TRUE)
   res2 <- uncensored(test_df, cols = c("pcb_87", "pcb_92"), keep_cens = FALSE)
   expect_equal(dim(res1), c(10, 4))
-  expect_equal(dim(res1), c(10, 2))
+  expect_equal(dim(res2), c(10, 2))
 })
 
 test_that("Check detect_cens() function", {

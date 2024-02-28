@@ -1,10 +1,10 @@
-#' Detect censored data
+#' Manage censored data
 #'
-#' @description For each column specified, censored data are detected by the presence of the symbol [<] . This function returned a data.frame with two columns by
+#' @description For each column specified, censored data are detected by the presence of the symbol [<] . This function removes all censored data in the specified columns. keep_cens=TRUE assigns the logicical test result (presence of absence of symbol <) to a new column, to keep track of the original censored data. 
 #'
-#' @param template a template. Use "?" to list available template.
-#' @param data data passed to [whisker::whisker.render()].
-#' @param ... further arguments passed to [rmarkdown::render()].
+#' @param df a data.frame. 
+#' @param cols a vector of character.
+#' @param keep_cens a boolean. If TRUE, assigns the logicical test result (presence of absence of symbol <) to a new column
 #'
 #' @return The return value, if any, from executing the function.
 #' @examples
@@ -16,7 +16,7 @@
 #' }
 uncensored <- function(df = NULL, cols = c(NULL), keep_cens = TRUE) {
   if (!is.data.frame(df)) cli::cli_abort("df must be a dataframe")
-  if (!all(cols %in% names(df))) cli::cli_abort("Some specified columns")
+  if (!all(cols %in% names(df))) cli::cli_abort("Some columns are not present in the data.frame")
 
   if (keep_cens) {
     df <- df |> dplyr::mutate(
