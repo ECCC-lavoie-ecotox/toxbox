@@ -1,0 +1,178 @@
+---
+title: "Statistiques descriptives sur les contaminants"
+author: "Steve Vissault"
+date: "2024-01-05"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    toc: no
+---
+
+# Cartographie des tailles d'échantillon
+
+## Objectifs
+
+1. Otenir une liste exhaustive des contaminants mesurés chez trois espèces impliquées dans le PASL.
+   a. Regrouper ces contaminants en famille 
+2. Produire une cartographie des tailles d'échantillons pour les combinaisons: Site, espèce, années, contaminant
+   a. Établir le nombre de d'échantillons pour chaque combinaison
+   b. Établir le nombre de données censurées pour chaque combinaison
+
+## Objectif 1: Otenir une liste exhaustive des contaminants mesurés chez quatre espèces impliquées dans le PASL
+
+### Isolation des plages de données pour les contaminants
+
+Recencement des fichiers et des feuillets (1 feuillet = 1 famille)
+Pour chacun des fichiers et feuillets, j'identifie la plage de colonne dans laquelle se retrouve les valeurs des contaminants (voir la liste intitulée "sheets" pour chacun des fichiers). 
+
+```{R}
+contaminants_mapping <- list(
+    herons = list(
+        path = "Z:/01-Projets et suivis/PASL/GrandHeron/Base de donnees GBHE oeufs.xlsx",
+        sheets = list(
+            PFC = c("PFBA", "PFDS"),
+            OC = c("1.2.4.5-Tetrachlorobenzene", "TCPM"),
+            PCB = c("PCB18/17", "Aroclor1260"),
+            BFR = c("BDE-7", "anti-DP"),
+            `non-ortho PCBs` = c("PCB-81", "PCB-169"),
+            `PCDDs & PCDFs` = c("2378-TCDD", "OCDF"),
+            Toxaphene = c("Total toxaphene", "B9-1025"),
+            FAME = c("Caproic Acid", "Docosahexaenoic Acid (DHA)"),
+            THg = c("THg-dw", "THg-ww"),
+            SI = c("d13C", "d34S")
+        )
+    ),
+    eiders = list(
+        path = "Z:/01-Projets et suivis/PASL/EiderDuvet/Base de donnees COEI.xlsx",
+        sheets = list(
+            PFC = c("PFBA", "PFDS"),
+            OC = c("1,2,4,5-Tetrachlorobenzene", "Mirex"),
+            PCB = c("PCB17/18", "PCB209"),
+            BFR = c("b-TBECH/BDE15", "BB101"),
+            THg = c("THg_dw", "THg_ww")
+        )
+    ),
+    gulls = list(
+        path = "Z:/01-Projets et suivis/PASL/GoelandArgenté/Base de donnees HERG.xlsx",
+        sheets = list(
+            PFC = c("PFBA", "PFDS"),
+            OC = c("1,2,4,5-Tetrachlorobenzene", "Mirex"),
+            PCB = c("PCB17/18", "PCB209"),
+            BFR = c("b-TBECH/BDE15", "BB101"),
+            THg = c("THg", "THg"),
+            SI = c("d13C", "d34S")
+        )
+    ),
+    gannets = list(
+        path = "Z:/01-Projets et suivis/PASL/FouBassan/Stats_NOGA_Temporal2022/Integration_ST LAWRENCE_Gannets Trends 1969-2019_OC-PCB-FR Metals D-F FAME CNS.xlsx",
+        sheets = list(
+            OC = c("1245TCB", "Mirex"),
+            PCB = c("PCB18/17", "Aroclor1260"),
+            BFR = c("BDE-15_B-TBECH", "anti-DP"),
+            `Non-ortho PCBs` = c("PCB 81", "PCB 169"),
+            `PCDDs & PCDFs` = c("2378-TCDD", "OCDF"),
+            Metal = c("THg", "Al"),
+            FAME = c("caproic acid", "docosahexaenoic acid (DHA)"),
+            SI = c("d15N", "CN")
+        )
+    )
+)
+
+```
+
+### Fusion des mesures de contaminants
+
+On effectue une double map (comme une double loop). Cette opération va extraire les valeurs de contaminants en traversant les classeurs (1 par espèce), et les feuillets (1 par famille de contaminant). 
+
+```{R}
+contaminants <- purrr::map(
+    # Loop over species dataset
+    contaminants_mapping, \(f){
+        # Copy the excel file locally in the temp folder
+        tmp_file <- tempfile()
+        invisible(file.copy(f$path, tmp_file, overwrite = TRUE))
+        # Loop over sheets
+        purrr::map2(f$sheets, names(f$sheets), \(s, n){
+            readxl::read_excel(tmp_file, sheet = n) |>
+                dplyr::select("Year", "Location", "SampleID", "Species", s[1]:s[2]) |>
+                dplyr::mutate(source = f$path, conpound_family = n) |>
+                dplyr::mutate(across(everything(), as.character)) |>
+                tidyr::pivot_longer(cols = s[1]:s[2], names_to = "variable") |>
+                dplyr::filter(!is.na(value))
+        }) |> dplyr::bind_rows()
+}) |> dplyr::bind_rows()
+```
+### QA sur les noms de contaminants
+
+Certains noms de composées divergent entre les différents classeurs de données (espèces)
+
+```{R}
+contaminants |> 
+    dplyr::group_by(source, conpound_family, variable) |>
+    dplyr::arrange(desc(variable)) |>
+    dplyr::count()
+```
+
+Atelier 1: Jouer a pareil, pas pareil, pour consolider la nomenclature des contaminants
+
+### QA sur les noms des sites
+ 
+```{R}
+contaminants |> 
+    dplyr::group_by(Location) |>
+    dplyr::count() |>
+    dplyr::arrange(Location)
+```
+
+Atelier 2: Jouer a pareil, pas pareil, pour consolider la nomenclature des sites
+
+### QA Data censurées
+
+On applique la transformation avec la fonction `toxbox::uncensored()`.
+
+```{R}
+devtools::load_all()
+contaminants_uncensored <- contaminants |> 
+    uncensored(cols = "value")
+```
+
+Isolation des valeurs NA's pour comprendre quelles sont les mesures qui ne peuvent pas être transformé en valeur numérique. 
+
+#### Q1. Combien de données se retrouvent dans ce cas de figure?
+
+```{R}
+table(is.na(contaminants_uncensored$value))
+```
+
+#### Q2. Dans quelle classeur et quel onglet on retrouve ces valeurs?
+
+```{R}
+contaminants_uncensored |> 
+    dplyr::filter(is.na(value)) |>
+    dplyr::group_by(source, conpound_family) |>
+    dplyr::count() |>
+    dplyr::arrange(source)
+```
+
+#### Q3. C'est quoi les valeurs qui ne peuvent pas être transférer en valeur numérique (après retrait du symbole <)?
+
+TODO: A compléter ici, marche pas
+
+```{R, eval = FALSE}
+contaminants |> 
+    dplyr::filter(stringr::str_detect(stringr::str_trim(value), "[:alpha:]")) |>
+    as.data.frame()
+```
+
+## Objectif 2: Produire une cartographie des tailles d'échantillons pour les combinaisons: Site, espèce, années, contaminant
+
+### Nombre de mesures par année, site, espèce, contaminant
+
+```{R, results = "asis"}
+contaminants |> 
+    dplyr::group_by(Location, Year, Species, variable) |>
+    dplyr::mutate(Year = as.integer(Year)) |>
+    dplyr::count() |>
+    DT::datatable()
+```
+
