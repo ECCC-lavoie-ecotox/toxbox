@@ -28,3 +28,4 @@ BugReports: https://github.com/ECCC-lavoie-ecotox/toxbox/issues
 Depends: 
     R (>= 4.0)
 LazyData: true
+Config/Needs/website: rmarkdown

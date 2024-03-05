@@ -12,9 +12,10 @@
 #'  data(censored_data)
 #'  uncensored(censored_data)
 #' }
+#' @export 
 uncensored <- function(df = NULL, cols = c(NULL), keep_cens = TRUE) {
   if (!is.data.frame(df)) cli::cli_abort("df must be a dataframe")
-  if (!all(cols %in% names(df))) cli::cli_abort("Some columns are not present in the data.frame")
+  if (!all(cols %in% names(df))) cli::cli_abort("Some specified columns are not present in the data.frame")
 
   if (keep_cens) {
     df <- df |> dplyr::mutate(
@@ -29,10 +30,12 @@ uncensored <- function(df = NULL, cols = c(NULL), keep_cens = TRUE) {
   return(df)
 }
 
+#' @export 
 detect_cens <- function(x) {
   x |> stringr::str_detect("<")
 }
 
+#' @export 
 remove_cens <- function(x) {
   x |>
     stringr::str_trim() |>
