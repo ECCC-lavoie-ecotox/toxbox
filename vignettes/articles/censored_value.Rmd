@@ -1,0 +1,556 @@
+---
+title: "Fonctions pour traiter les valeurs censurées dans les bases de données de contaminants"
+author: "Rose Lacombe"
+date: "2024-01-05"
+output: 
+  #html_document:
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: kate
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Dans ce document, on retrouve les fonctions que nous avons créé pour imputer des valeurs avec des données censurées de contaminants d'ECCC. 
+
+Les packages nécessaires sont:
+```{r eval=FALSE, include=TRUE}
+library(dplyr)
+library(stringr)
+library(NADA)
+library(NADA2)
+library(tidyr)
+library(tidyverse)
+```
+
+### L'imputation de valeurs censurées ###
+
+La première fonction, censor() accepte des jeux de données qui contiennent des valeurs censurées (càd des données sous la limite de détection/quantification) formatées comme-ci: "<0.001". Les premières colonnes dans le jeu de données doivent être celles que nous ne voulons pas "dé-censurer", donc des colonnes non-numériques (ex. FID, Location, Sex) et les colonnes numériques que nous ne souhaitons pas dé-censurer (ex. Year, isotopes stables, mesures morphométriques).
+
+La fonction analysera chaque colonne individuellement à partir de la colonne de départ préalablement spécifiée. Par la suite, une nouvelle colonne, nommée avec le nom du composé et le suffixe "cen" sera ensuite créée et contiendra un indicateur binaire TRUE ou FALSE. Si une observation du composé contient un "<", c'est-à-dire que c'est une valeur censurée, l'observation dans la nouvelle colonne (l'indicateur de censure) sera "TRUE". Si l'observation n'est pas censurée, l'indicateur sera "FALSE". Ceci nous permettra d'utiliser des packages R développés pour des valeurs censurées. Enfin, la fonction censor() retirera les symboles "<" du jeu de données et numérisera toutes les colonnes contenant des données de contaminants. À ce stade, le jeu de données contiendra des vraies concentrations de contaminants ("FALSE" dans la colonne indicatrice du composé) et des limites de détection ("TRUE" dans les colonnes indicatrices).
+
+Pour utiliser la fonction, il suffit de faire rouler les lignes suivantes: 
+
+    censor(data, t)
+
+    #For example 
+    OCcen <- censor(OC, 8)
+
+t dénote le numéro de la colonne à laquelle nous voulons commencer le processus de "dé-censuration".
+
+```{r eval=FALSE, include=TRUE}
+censor <- function(data, t) {
+  cols <- colnames(data) #create a vector of col names for future naming ease
+  
+  for (i in t:ncol(data)) { #t = number of the col we start at 
+    #(skip the sample info, start at first compound)
+    
+    #if "<" is found, put TRUE in the new col because it is a non-detect, 
+    #if not, put FALSE (= uncensored value)
+    data$new <- if_else(grepl( "<", data[, (i)]), TRUE, FALSE)
+    #paste the compound name to the col head followed by "cen"
+    names(data)[names(data) == 'new'] <- paste0(cols[[i]], "cen") 
+    #if "<" is found, remove it for easy numeric conversion
+    data[, (i)] <- str_replace(data[, (i)], "<", "") 
+    #convert to numeric
+    data[, (i)] <- as.numeric(as.character(data[, (i)]))
+  }
+  return(data)
+}
+```
+
+Une fois le jeu de donné "dé-censuré", les valeurs pour les observations qui étaient sous la limite de détection peuvent être imputées.
+
+L'input doit contenir ces colonnes: "FID", "Year", "d15N", "d13C"*, et "Lipid". Si une ou plusieurs de ces colonnes ne sont pas présentes dans le jeu de données, il vous faut simplement ajouter une colonne vide avec le nom approprié. 
+*Note:* En plus des colonnes mentionnées précédemment nous pouvons inclure d'autres facteurs (colonnes) pour lesquels les valeurs de doivent pas être dé-censurées. Pour ce fait, simplement ajouter le nom du facteur dans les lignes de code ci-dessous où #COVARIATES est inscrit. 
+
+*Dans le cas de données historiques, nous devons corriger le d13C pour l'effet Suess. On peut changer le nom dans la fonction en remplaçant le d13C (d13c -> d13CS).
+
+
+*Note:* La fonction ci-dessous inclut Year et Location - c'est-à-dire que les observations seront regroupées par Année et par Site pour permettre ensuite l'imputation des valeurs censurées. Toutefois, si seulement un de ces facteurs est nécessaire, il suffit de retirer le second du script (#dénoté par 3 étoiles à la fin de la ligne de script).
+
+Tout d'abord, la fonction séparera les valeurs qui ne doivent pas être imputées (ex. d15N, d13CS, Lipid, etc.). Ces colonnes seront rajoutées à l'output final. Ensuite, le jeu de données sera groupé puis séparé par Année et par Site. La première loop sélectionne et isole chaque combinaison Année-Site individuellement pour que faciliter l'imputation des valeurs le plus simplement possible. La deuxième loop* (qui se trouve à l'intérieur de la première) sélectionne les composés un par un et isole la colonne contenant les données (réelles et censurées), ainsi que la colonne avec l'indicateur de censure correspondant. *Important:* deux lignes de code très importantes empêche de briser la loop: 1. si toutes les valeurs pour un composé dans l'Année et le Site isolé sont "NA", la fonction passera directement au prochain composé. 2. si trop de valeurs sont des limites de détection ("TRUE" dans la colonne indicatrice), les valeurs ne peuvent pas être imputées car pas assez de vraies données présentes et par conséquent la fonction passera directement au prochain composé.
+
+*La deuxième loop utilise l'argument h, qui dénote le numéro de la colonne du premier composé (contaminant). Par exemple, h = 4 si Site et Année sont inclus, mais h = 3 si seulement un de ses deux facteurs est inclus, puisque le jeu de données entrant dans la deuxième loop sera formaté comme tel : "FID", "Year", "Location", "Composé 1", etc.
+
+La fonction cenros() du package NADA sera utiliser pour calculer des moyennes en tenant compte des valeurs censurées, et permet d'interpoler des valeurs fictives afin d'obtenir ces moyennes. Cette fonction se base sur la méthode statistique "régression d’ordre statistique" (ROS) permettant d'assigner des valeurs interpolées aux valeurs censurées présentes dans le jeu de données. Le processus est répété pour chaque composé à l'intérieur d'une Année et d'un Site, et également pour chaque combinaison de groupes Année-Site. Les résultats seront ajoutés à un dataframe vide (Format : long). Lorsque les deux loops complétées, le dataframe sera transposé en format wide.
+
+**Pour l'instant j'ai retiré cette opération pour que des NAs restent**: puis on remplace les NA restants (ceux qui ont été sauté à cause de trop de non-detects) avec une valeur égale à la moitié de la limite de détection, provenant d'un fichier LOD qui est inclut dans le input de la fonction. Le fichier LOD doit contenir une ligne par échantillon, avec la limite de détection pour chaque composé à chaque année.
+#
+
+La fonction impute() est utilisée comme-ci:
+
+    impute(data, h)
+
+    #For example
+    OCint <- impute(OCcen, 9)
+
+
+```{r eval=FALSE, include=TRUE}
+impute <- function(data, h) { #h is column the second loop starts at. D
+  #etermined by what you are including
+  #In only year and FID, h = 3, if Year and location, h = 4
+  SI<-subset(data, select=c(FID, Year, Location, d15N, d13C, d34S, Lipid)) 
+  #*COVARIATES*
+  #to merge with our interpolated data set later
+  dat2 <- subset(data, select = -c(d15N, d13C, d34S, Lipid)) #*COVARIATES* 
+  #only keep year, location, FID, and compound values and censor indicators
+  cols <- colnames(dat2)
+  
+  colony <- dat2 %>% group_by(Location, Year) %>% group_split(dat2)
+  
+  stats <- data.frame(FID = as.character(),
+                      Location = as.character(),
+                      Year = as.numeric(),
+                      Compound = as.character(),
+                      Concentration = as.numeric()) #make empty dataframe - long 
+  
+  for (i in 1:length(colony)) { #start with the group in list 
+    #i=1 #troubleshooting
+    
+    loc <- colony[[i]] #isolate group year for coding simplicity
+    k<-ifelse(ncol(loc) %% 2 == 0,round((ncol(loc))/2), round((ncol(loc))/2)+1) 
+    #calculates the halfway mark of the df, 
+    #i.e. where the compounds stop and censure indicators start
+    
+    for (f in h:k) { #start at first compound: 3rd col
+      #f=4 #troubleshooting
+      
+      #isolate so we only have compound values and indicators
+      x <- grep(cols[f], colnames(loc), value = FALSE) #find censor indicator 
+      comp <- as.data.frame(loc[, c(1, x)]) #isolate the compound and cen
+      colnames(comp) <- c("FID", "Compound", "Cen")
+      comp2 <- comp[order(comp$Compound, decreasing = FALSE, na.last = FALSE),]
+      
+      d <- nrow(loc) #how many obs do we have in this group
+      e <- d-1
+      
+      if(d < 2) {print(loc$FID)} #Tells us which are singular in their group 
+      #(ex. single sample in that year/location)
+      
+      if(is.na(sum(comp[, 2])) == TRUE) next #If all vals are ND, skip 
+      if(length(grep("TRUE", comp2[,3])) >= e) next #If all vals are ND, skip 
+      
+      #convert to ROS object
+      compros <- cenros(comp2[, 2], comp2[, 3])
+      #We want to keep each ind value so we can pool them properly later
+      
+      add <- data.frame(FID = comp2$FID, #add IDs
+                        Location = loc$Location, #add all the years 
+                        Year = loc$Year,
+                        Compound = rep(cols[f], times = d), #Compound name
+                        Concentration = dput(as.numeric(compros$modeled)))
+      
+      stats <- rbind(stats, add) #append new rows
+    }
+    
+  }
+  
+  interp <- stats %>%
+    group_by(Location, Year, Compound) %>%
+    pivot_wider(id_cols = c(FID, Location, Year), 
+                names_from = Compound, values_from = Concentration) 
+  
+  #Here we are filling the remaining NAs (caused by non-detects) 
+  #with LOD/2 values so we don't have empty data
+  #patched <- rows_patch(interp, LOD, by = "FID")
+  
+  final <- merge(SI, interp, by = c("FID", "Location", "Year")) 
+  #patched instead of interp if patching
+  
+}
+```
+
+Dans la fonction impute(), une commande indique si un échantillon est seul dans son groupe Année-Site (impute l'exclu par défaut). Nous ne pouvons pas utiliser les méthode de non-detects (ROS) sur un seul échantillon et la fonction impute() exclu l'échantillon seul par défaut. Cette ligne de code demande à R d'imprimer le FID de l'échantillon si tel est le cas. Il est donc *important* de vérifier le output de impute() dans la console si des FID ont été imprimés. En les isolants (voir exemple plus bas), nous pouvons passer les échantillons "seuls" dans la fonction singles(). Singles() est adaptée de la fonction impute() afin de rapporter les valeurs non-censurées, et de remplacer les limites de détection par NA. Singles() prend le même argument h que impute(). 
+
+    singles(data, h)
+    #for example
+    ocextra <- singles(OCcen, 9)
+
+
+```{r eval=FALSE, include=TRUE}
+singles <- function(data, h) { #h is column the second loop starts at. 
+  #In only year and FID, h = 3, if Year and location, h = 4
+  SI <-subset(data, select=c(FID, Year, Location, d15N, d13C, d34S, Lipid)) 
+  #*COVARIATES* above 
+  #to merge with our interpolated data set later
+  dat2 <- subset(data, select = -c(d15N, d13C, d34S, Lipid)) #*COVARIATES* 
+  #only keep year, location, FID, and compound values and censor indicators
+  cols <- colnames(dat2)
+  
+  colony <- dat2 %>% group_by(Location, Year) %>% group_split(dat2)
+  
+  stats <- data.frame(FID = as.character(),
+                      Location = as.character(),
+                      Year = as.numeric(),
+                      Compound = as.character(),
+                      Concentration = as.numeric()) #make empty dataframe 
+  
+  for (i in 1:length(colony)) { #start with the first group in list 
+    #i=2 #troubleshooting
+    
+    loc <- colony[[i]] #isolate group location for coding simplicity
+    k<-ifelse(ncol(loc) %% 2 == 0,round((ncol(loc))/2), round((ncol(loc))/2)+1)
+    
+    for (f in h:k) { #start at first compound: 3rd col
+      #f=4 #troubleshooting
+      
+      #isolate so we only have compound values and indicators
+      x <- grep(cols[f], colnames(loc), value = FALSE) #find censor indicator 
+      comp <- as.data.frame(loc[, c(1, x)]) #isolate the compound and censor ind
+      colnames(comp) <- c("FID", "Compound", "Cen")
+      
+      #for singles we only keep values if their censure indicator is FALSE
+      
+      add <- data.frame(FID = comp$FID, #add IDs
+                        Location = loc$Location, #add all the years 
+                        Year = loc$Year,
+                        Compound = cols[f], #paste in the Compound name 
+                        Concentration = ifelse(comp$Cen == "FALSE", 
+                                               comp$Compound, NA)) 
+      #If value is uncensored (FALSE), put the compound data, if censured put NA
+      
+      stats <- rbind(stats, add) #append new rows
+      
+    }
+    
+  }
+  
+  interp <- stats %>%
+    group_by(Location, Compound) %>%
+    pivot_wider(id_cols = c(FID, Year, Location), 
+                names_from = Compound, values_from = Concentration) 
+  
+  #Here we are filling the remaining NAs (caused by non-detects) 
+  #with LOD/2 values so we don't have empty data
+  #patched <- rows_patch(interp, LOD, by = "FID")
+  
+  final <- merge(SI, interp, by = c("FID", "Location", "Year")) 
+  #patched instead of interp if patching
+  
+} #Essentially impute() for locations with single observations 
+#(i.e. imputing NDs is impossible so we exculde censured data and keep real values)
+```
+
+L'exemple suivant montre comment identifier des échantillons seuls et les rajouter dans le output de impute():
+
+```{r eval=FALSE, include=TRUE}
+pcbex <- PCBcen[PCBcen$FID == "W222559-01"| PCBcen$FID == "W221979-02", ] 
+#find x or y that were printed by impute
+pcbex1 <- singles(pcbex, 4)
+
+Append to impute output
+PCBint <- dplyr::bind_rows(PCBint, pcbex1) #Bind the two dataframes 
+#but keep columns even if there aren't in both dfs
+PCBint <- PCBint[,colSums(is.na(PCBint)) < nrow(PCBint)] 
+#remove columns composed only of NAs
+```
+
+
+### Les sommes des valeurs censurées ###
+
+Pour calculer les sommes de différentes familles de composés, la méthode Kaplan Meier (KM) est utilisée pour calculer des moyennes en tenant compte de plusieurs valeurs censurées différentes. La moyenne est la somme divisée par le nombre d'observations :
+
+    moyenne = somme des observations / nombre d'observations
+
+ainsi la somme peut être facilement déduite en ce basant sur l'équation de la moyenne:
+
+    Somme = moyenne * nombre d'observations
+    
+Par conséquent, la moyenne estimée à l'aide de la méthode KM multipliée par le nombre d'observations (dans ce cas le nombre de composé) permet d'obtenir la somme estimée.
+
+Malheureusement, il est difficile de construire une fonction pour calculer les sommes puisque les familles diffèrent par groupe de contaminants (OC, PCB, BFR). Ainsi, la loop développées ci-dessous devra être modifiée pour chaque groupe séparemment (et ce même dans chaque script dépendant des données).
+
+Il est important de noter que les sommes décrites dans les loops ci-bas ne sont que des exemples des sommes que nous pouvons calculer. Les loops peuvent être modifier pour satisfaire vos besoins en ajoutat ou en retirant des sommes ou des composés.
+
+
+Pour les OC:
+```{r eval=FALSE, include=TRUE}
+OCsums <- data.frame(FID = as.character(),
+                   Sum14OC = as.numeric(),
+                   SumDDT = as.numeric(),
+                   SumCHL = as.numeric(),
+                   SumHCH = as.numeric())
+#
+for (i in 1:nrow(OCcen)) { #cycles through the individual samples
+  #i=48 #troubleshooting
+  
+  ind <- OCcen[i,]
+  indconc <- ind %>% pivot_longer(cols = 6:19, 
+                  names_to = "Compound", values_to = "Concentration") %>%
+    select(c("FID", "Year","Compound", "Concentration"))
+  
+  indcen <- ind %>%pivot_longer(cols = 20:33, 
+                            names_to = "Compound", values_to = "Cen") %>%
+    select(c("FID", "Year","Compound", "Cen")) 
+  indcen$Compound <-  str_replace(indcen$Compound, "cen", "")
+  
+  indlong <- merge(indconc, indcen, by = c("FID", "Year", "Compound"))
+  print(indlong$FID) #see where errors are occuring
+  
+  #First all 14 OCs
+  U <- indlong$Concentration
+  V <- indlong$Cen
+  indfit <- with(indlong, censtats(U, V)) #need to be vectors
+  
+  num <- nrow(indlong)
+  sum14 <- (indfit[1,2])*num
+  
+  #Now DDT compounds
+  ddt <- subset(indlong, Compound == "ppDDD" | Compound == "ppDDE" | 
+                  Compound == "ppDDT") #If we are missing one of these from OCint, 
+  #it is a good indicator we'll be missing it here so remove it from the list, and 
+  #reduce the number in the if statement by the number of compounds removed
+  if(length(grep("TRUE", ddt[,5])) >= 3) {print(indlong$FID)}
+  if(length(grep("TRUE", ddt[,5])) >= 3) next #If all vals are ND, skip to next
+  ddtc <- ddt$Concentration
+  ddtcen <- ddt$Cen
+  ddtfit <- with(ddt, censtats(ddtc, ddtcen)) 
+  DDT <- (ddtfit[1,2])* 3  #multiply estimated mean by # compounds
+  
+  #SumCHL
+  chl <- subset(indlong, Compound == "OxyChlordane" | Compound == "cChlordane" 
+                | Compound == "tChlordane" | Compound == "cNonachlor")
+  if(length(grep("TRUE", chl[,5])) >= 4) {print(indlong$FID)}
+  if(length(grep("TRUE", chl[,5])) >= 4) next #If all vals are ND, skip to next
+  
+  chlc <- chl$Concentration
+  chlcen <- chl$Cen
+  chlfit <- with(chl, censtats(chlc, chlcen))
+  CHL <- (chlfit[1,2])* 4  #multiply estimated mean by # compounds
+  
+  #SumHCH
+  hch <- subset(indlong, Compound == "aHCH" | Compound == "bHCH" | 
+                  Compound == "gHCH")
+  
+  if(length(grep("TRUE", hch[,5])) >= 3) next #If all vals are ND, skip 
+  
+  hchc <- hch$Concentration
+  hchcen <- hch$Cen
+  hchfit <- with(hch, censtats(hchc, hchcen))
+  HCH <- (hchfit[1,2])* 3 #multiply estimated mean by # compounds
+  
+  add <- data.frame(FID = ind$FID,
+                    Sum14OC = sum14,
+                    SumDDT = DDT,
+                    SumCHL = CHL,
+                    SumHCH = HCH)
+  OCsums <- rbind(OCsums, add)
+}
+```
+
+Pour les PCB: (**Important**: Faire attention aux espaces dans les noms des composés)
+```{r eval=FALSE, include=TRUE}
+
+PCBsums <- data.frame(FID = as.character(),
+                      SumPCB = as.numeric(),
+                      SumTetra = as.numeric(),
+                      SumPenta = as.numeric(),
+                      SumHexa = as.numeric(),
+                      SumHepta = as.numeric(),
+                      SumOcta = as.numeric(),
+                      SumOrtho = as.numeric(),
+                      Sum6 = as.numeric())
+#
+for (i in 1:nrow(PCBcen)) { #cycles through the individual samples
+  #i= 24 #troubleshooting
+  
+  ind <- PCBcen[i,]
+  indconc <- ind %>% pivot_longer(cols = 9:43, 
+                        names_to = "Compound", values_to = "Concentration") %>%
+    select(c("FID", "Year","Compound", "Concentration"))
+  
+  indcen <- ind %>%pivot_longer(cols = 44:78, 
+                            names_to = "Compound", values_to = "Cen") %>%
+    select(c("FID", "Year","Compound", "Cen")) 
+  indcen$Compound <-  str_replace(indcen$Compound, "cen", "")
+  
+  indlong <- merge(indconc, indcen, by = c("FID", "Year", "Compound"))
+  print(indlong$FID) #see where errors are occuring
+  
+  #First all PCBs
+  U <- indlong$Concentration
+  V <- indlong$Cen
+  indfit <- with(indlong, censtats(U, V)) #need to be vectors
+  
+  num <- nrow(indlong)
+  sumPCB <- (indfit[1,2])*num
+  
+  #Tetra
+  tetra <- subset(indlong, Compound == "PCB52" | Compound == "PCB49" | 
+                    Compound == "PCB44" | Compound == "PCB70")
+  if(length(grep("TRUE", tetra[,5])) >= 4) {print(indlong$FID)}
+  if(length(grep("TRUE", tetra[,5])) >= 4) next #If all vals are ND, skip 
+  tetrac <- tetra$Concentration
+  tetracen <- tetra$Cen
+  tetrafit <- with(tetra, censtats(tetrac, tetracen)) 
+  TETRA <- (tetrafit[1,2])* nrow(tetra) #multiply mean  by # compounds
+  
+  #Penta
+  penta <- subset(indlong, Compound == "PCB87" | Compound == "PCB99" | 
+                    Compound == "PCB101" | Compound == "PCB105" | 
+                    Compound == "PCB110" | Compound == "PCB118")
+  pentac <- penta$Concentration
+  pentacen <- penta$Cen
+  pentafit <- with(penta, censtats(pentac, pentacen))
+  PENTA <- (pentafit[1,2])* nrow(penta) 
+  
+  #Hexa
+  hexa <- subset(indlong, Compound == "PCB128" | Compound == "PCB138" | 
+                   Compound == "PCB151" | Compound == "PCB153" | 
+                   Compound == "PCB158")
+  hexac <- hexa$Concentration
+  hexacen <- hexa$Cen
+  hexafit <- with(hexa, censtats(hexac, hexacen))
+  HEXA <- (hexafit[1,2])* nrow(hexa) 
+  
+  #Hepta
+  hepta <- subset(indlong, Compound == "PCB170" | Compound == "PCB171" | 
+                    Compound == "PCB180" | Compound == "PCB183" | 
+                    Compound == "PCB187")
+  heptac <- hepta$Concentration
+  heptacen <- hepta$Cen
+  heptafit <- with(hepta, censtats(heptac, heptacen))
+  HEPTA <- (heptafit[1,2])* nrow(hepta)
+  
+  #Octa
+  octa <- subset(indlong, Compound == "PCB194" | Compound == "PCB195")
+  if(length(grep("TRUE", octa[,5])) >= 2) {print(indlong$FID)}
+  if(length(grep("TRUE", octa[,5])) >= 2) next #If all vals are ND, next
+  octac <- octa$Concentration
+  octacen <- octa$Cen
+  octafit <- with(octa, censtats(octac, octacen))
+  OCTA <- (octafit[1,2])* nrow(octa)
+  
+  #Ortho
+  ortho <- subset(indlong, Compound == "PCB70" | Compound == "PCB105" | 
+                    Compound == "PCB118")
+  orthoc <- ortho$Concentration
+  orthocen <- ortho$Cen
+  orthofit <- with(ortho, censtats(orthoc, orthocen))
+  ORTHO <- (orthofit[1,2])* nrow(ortho)
+  
+  #Sum of 6
+  six <- subset(indlong, Compound == "PCB31/28" | Compound == "PCB101" | 
+                  Compound == "PCB138" | Compound == "PCB153" | 
+                  Compound == "PCB180")
+  sixc <- six$Concentration
+  sixcen <- six$Cen
+  sixfit <- with(six, censtats(sixc, sixcen))
+  SIX <- (sixfit[1,2])* nrow(six)
+  
+  add <- data.frame(FID = ind$FID,
+                    SumPCB = sumPCB,
+                    SumTetra = TETRA,
+                    SumPenta = PENTA,
+                    SumHexa = HEXA,
+                    SumHepta = HEPTA,
+                    SumOcta = OCTA,
+                    SumOrtho = ORTHO,
+                    Sum6 = SIX)
+  PCBsums <- rbind(PCBsums, add)
+}
+```
+
+Pour les BFR
+```{r eval=FALSE, include=TRUE}
+BFRsums <- data.frame(FID = as.character(),
+                      SumPBDE = as.numeric(),
+                      SumPentaBDE = as.numeric(),
+                      SumOctaBDE = as.numeric(),
+                      SumDecaBDE = as.numeric())
+#
+for (i in 1:nrow(BFRcen)) { #cycles through the individual samples
+  #i=7 #troubleshooting
+  
+  ind <- BFRcen[i,]
+  indconc <- ind %>% pivot_longer(cols = 9:31, names_to = "Compound", values_to = "Concentration") %>%
+    select(c("FID", "Year","Compound", "Concentration"))
+  
+  indcen <- ind %>%pivot_longer(cols = 32:52, names_to = "Compound", values_to = "Cen") %>%
+    select(c("FID", "Year","Compound", "Cen")) 
+  indcen$Compound <-  str_replace(indcen$Compound, "cen", "")
+  
+  indlong <- merge(indconc, indcen, by = c("FID", "Year", "Compound"))
+  indlong <- na.omit(indlong)
+  #print(indlong$FID) #see where errors are occuring
+  
+  #First all 14 OCs
+  U <- indlong$Concentration
+  V <- indlong$Cen
+  indfit <- with(indlong, censtats(U, V)) #need to be vectors
+  
+  num <- nrow(indlong)
+  sumpbde <- (indfit[1,2])*num
+  
+  #
+  #Penta-BDEs
+  pentabde <- subset(indlong, Compound == "BDE47" | Compound == "BDE99" | Compound == "BDE100" 
+                  | Compound == "BDE153" | Compound == "BDE154/BB153" | Compound == "BDE85")
+  pentabdec <- pentabde$Concentration
+  pentabdecen <- pentabde$Cen
+  pentabdefit <- with(pentabde, censtats(pentabdec, pentabdecen))
+  PentaBDE <- (pentabdefit[1,2])* nrow(pentabde)
+  
+  #Octa-BDEs
+  octabde <- subset(indlong, Compound == "BDE183" | Compound == "BDE209")
+  octabdec <- octabde$Concentration
+  octabdecen <- octabde$Cen
+  octabdefit <- with(octabde, censtats(octabdec, octabdecen))
+  OctaBDE <- (octabdefit[1,2])* nrow(octabde)
+  
+  #Deca is only 209 so we'll add in manually
+  decabde <- subset(indlong, Compound == "BDE209")
+  decabdec <- decabde$Concentration
+  decabdecen <- decabde$Cen
+  
+  
+  add <- data.frame(FID = ind$FID,
+                    SumPBDE = sumpbde,
+                    SumPentaBDE = PentaBDE,
+                    SumOctaBDE = OctaBDE,
+                    SumDecaBDE = ifelse(decabdecen == "FALSE", print(decabdec), NA))
+  BFRsums <- rbind(BFRsums, add)
+}
+```
+
+Plusieurs lignes du script sont importantes car elles empêchent la loop de briser ("fail safes"): 1. si tous les composés d'une famille ont des valeurs censurées pour un échantillon, la moyenne ne peut pas être estimée alors la loop passera automatiquement au prochain échantillon. 
+Si la loop saute un échantillon, le FID sera imprimé dans le output dans la console. Alors comme pour impute(), il est important de vérifier dans la console les échantillons qui ont été sautés et de les traiter manuellement. Pour ce faire, rouler la loop pour un échantillon spécifique en roulant i = X (X = numéro de la rangée de l'échantillon), et noter les valeurs des sommes dans un autre dataframe) 
+
+Exemple: les NAs représentent les sommes qui n'ont pas pu être calculés pour 4 échantillons.
+
+```{r eval=FALSE, include=TRUE}
+PCBpatch <- data.frame(FID = c("W223432-04", "W232539-01", 
+                               "W232539-02", "W232539-03"),
+           SumPCB = c(0.3936, 0.1833, 0.0868, 0.1481),
+           SumTetra = c(NA, 0.0068, 0.004, 0.0083),
+           SumPenta = c(0.0609, 0.0433, 0.0144, 0.0388),
+           SumHexa = c(0.196, 0.0666, 0.0278, 0.0522),
+           SumHepta = c(0.0872, 0.0424, 0.0251, 0.0318),
+           SumOcta = c(0.0087, NA, NA, NA),
+           SumOrtho = c(0.0449, 0.0247, 0.0082, 0.0207),
+           Sum6 = c(0.2136, 0.0805, 0.0365, 0.0655))
+
+PCBsums <- rbind(PCBsums, PCBpatch)
+```
+
+Dépendant des jeux de données, il faudra ajouter les lignes de script comme "fail safes" (voir plus haut) à d'autres familles de contaminants. Vous pouvez toujours le rajouter à toutes les sommes si c'est plus facile que d'identifier la famille qui pose problème, mais bien faire attention de changer le df auquel il se réfère:
+
+```{r eval=FALSE, include=TRUE}
+if(length(grep("TRUE", tetra[,5])) >= 4) {print(indlong$FID)} 
+#tetra is the df that needs to be changed for each sum
+  if(length(grep("TRUE", tetra[,5])) >= 4) next 
+#tetra is the df that needs to be changed for each sum
+```
+
+Une fois que tout roule bien, on joint le output de impute() (ex. OCint) à l'output des sommes (ex. OCsums).
+
+```{r eval=FALSE, include=TRUE}
+OC <- merge(OCint, OCsums, by = "FID")
+```
+
+
+Voilà! Les valeurs censurées sont gérées et prêtes pour les tests statistiques :)
