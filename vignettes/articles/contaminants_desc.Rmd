@@ -1,20 +1,20 @@
 ---
-title: "Statistiques descriptives sur les contaminants"
+title: "Statistiques descriptives sur les tailles d'échantillon"
 author: "Steve Vissault"
 date: "2024-01-05"
 output: 
-  prettydoc::html_pretty:
-    theme: leonids
-    toc: no
+  html_document:
+    highlight: tango
+    theme: lumen
+    toc: true
+    toc_float: true
 ---
-
-# Cartographie des tailles d'échantillon
 
 ## Objectifs
 
-1. Otenir une liste exhaustive des contaminants mesurés chez trois espèces impliquées dans le PASL.
+1. Otenir une liste exhaustive des contaminants mesurés chez quatre espèces impliquées dans le PASL.
    a. Regrouper ces contaminants en famille 
-2. Produire une cartographie des tailles d'échantillons pour les combinaisons: Site, espèce, années, contaminant
+2. Déterminer les tailles d'échantillons pour les combinaisons: Site, espèce, années, contaminant
    a. Établir le nombre de d'échantillons pour chaque combinaison
    b. Établir le nombre de données censurées pour chaque combinaison
 
@@ -107,10 +107,12 @@ contaminants <- purrr::map(
 Certains noms de composées divergent entre les différents classeurs de données (espèces)
 
 ```{R}
-contaminants |> 
-    dplyr::group_by(source, conpound_family, variable) |>
+dups_contaminants <- contaminants |> 
+    dplyr::group_by(conpound_family, variable) |>
     dplyr::arrange(desc(variable)) |>
     dplyr::count()
+
+dups_contaminants
 ```
 
 Atelier 1: Jouer a pareil, pas pareil, pour consolider la nomenclature des contaminants
@@ -118,10 +120,11 @@ Atelier 1: Jouer a pareil, pas pareil, pour consolider la nomenclature des conta
 ### QA sur les noms des sites
  
 ```{R}
-contaminants |> 
+dups_sites <- contaminants |> 
     dplyr::group_by(Location) |>
-    dplyr::count() |>
-    dplyr::arrange(Location)
+    dplyr::count()
+
+dups_sites
 ```
 
 Atelier 2: Jouer a pareil, pas pareil, pour consolider la nomenclature des sites
@@ -164,15 +167,84 @@ contaminants |>
     as.data.frame()
 ```
 
-## Objectif 2: Produire une cartographie des tailles d'échantillons pour les combinaisons: Site, espèce, années, contaminant
+## Objectif 2: Déterminer les tailles d'échantillons pour les combinaisons: Site, espèce, années, contaminant
 
 ### Nombre de mesures par année, site, espèce, contaminant
 
 ```{R, results = "asis"}
-contaminants |> 
-    dplyr::group_by(Location, Year, Species, variable) |>
+data_count <- contaminants |> 
+    dplyr::group_by(Location, Year, Species, conpound_family, variable) |>
     dplyr::mutate(Year = as.integer(Year)) |>
-    dplyr::count() |>
+    dplyr::count() 
+```
+
+```{R}
+data_count |>
     DT::datatable()
+```
+
+#### Criteria 1. On isole les contaminants qui ont été mesuré une seule fois par année pour un site.
+
+```{R}
+data_count <- data_count |>
+    dplyr::filter(n != 1)
+```
+
+#### Criteria 2. On retire les sites pour lesquelles, il y a une seule année de collecte (impossibilité de calibrer un modèle de tendance temporelle).
+
+Voici la liste des sites pour lesquelles, on a une seule année de mesure
+
+```{R, results = "asis"}
+crit2 <- contaminants |> 
+    dplyr::select(Location, Year) |>
+    dplyr::distinct() |>
+    dplyr::group_by(Location) |>
+    dplyr::count() |>
+    dplyr::filter(n == 1) |>
+    dplyr::pull(Location)
+crit2
+```
+
+On retire ces sites pour l'étude de la taille de l'échantillon
+
+```{R}
+data_count <- data_count |>
+    dplyr::filter(!Location %in% crit2) |>
+    dplyr::ungroup()
+```
+
+#### Figures: Taille des échantillons par site 
+
+```{r, results = "asis", echo = FALSE}
+combinaisons <- data_count |> 
+    dplyr::select(Location, conpound_family) |> 
+    unique()
+
+for (s in seq_len(nrow(combinaisons))[1:2]) {
+
+    d <- data_count |> 
+        dplyr::filter(conpound_family == combinaisons$conpound_family[s] & Location == combinaisons$Location[s]) |>
+        dplyr::mutate(Year = as.character(Year))
+    
+    cat("\n##### ", combinaisons$conpound_family[s], "sur le site", combinaisons$Location[s],  "\n")
+
+    p <- ggplot(d, aes(x = Year, y = variable, fill = n)) + 
+        geom_tile(color = 'white') + 
+        coord_fixed() + 
+        viridis::scale_fill_viridis(trans = 'reverse') + 
+        scale_x_discrete(breaks = seq(1969, 2023, 1)) +
+        theme_minimal() +
+        theme(
+            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), 
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank()
+        ) + ylab(NULL) + xlab(NULL) +
+        facet_wrap(~Species, nrow = 1)
+
+    print(p)
+
+    cat("\n")
+
+}
 ```
 
