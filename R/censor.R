@@ -30,11 +30,21 @@ uncensored <- function(df = NULL, cols = c(NULL), keep_cens = TRUE) {
   return(df)
 }
 
+#' Detect censored measurement 
+#'
+#' @description Censored data are detected by the presence of the symbol [<] .
+#'
+#' @param x lab measurements vector
 #' @export 
 detect_cens <- function(x) {
   x |> stringr::str_detect("<")
 }
 
+#' Remove censored measurement symbol (<)
+#'
+#' @description Remove censored measurement symbol (<)
+#'
+#' @param x lab measurements vector
 #' @export 
 remove_cens <- function(x) {
   x |>
