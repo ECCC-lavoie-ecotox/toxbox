@@ -18,7 +18,9 @@ output:
    a. Établir le nombre de d'échantillons pour chaque combinaison
    b. Établir le nombre de données censurées pour chaque combinaison
 
-## Objectif 1: Otenir une liste exhaustive des contaminants mesurés chez quatre espèces impliquées dans le PASL
+## Objectif 1. Otenir une liste exhaustive des contaminants 
+
+On cherche à obtenir une liste exhaustive des contaminants mesurés chez quatre espèces impliquées dans le PASL.
 
 ### Isolation des plages de données pour les contaminants
 
@@ -167,7 +169,7 @@ contaminants |>
     as.data.frame()
 ```
 
-## Objectif 2: Déterminer les tailles d'échantillons pour les combinaisons: Site, espèce, années, contaminant
+## Objectif 2: Déterminer la taille d'échantillons par site
 
 ### Nombre de mesures par année, site, espèce, contaminant
 
@@ -183,66 +185,76 @@ data_count |>
     DT::datatable()
 ```
 
-#### Criteria 1. On isole les contaminants qui ont été mesuré une seule fois par année pour un site.
-
-```{R}
-data_count <- data_count |>
-    dplyr::filter(n != 1)
-```
-
-#### Criteria 2. On retire les sites pour lesquelles, il y a une seule année de collecte (impossibilité de calibrer un modèle de tendance temporelle).
+#### Criteria 1. On retire les sites pour lesquelles, il y a une seule année de collecte (impossibilité de calibrer un modèle de tendance temporelle).
 
 Voici la liste des sites pour lesquelles, on a une seule année de mesure
 
 ```{R, results = "asis"}
-crit2 <- contaminants |> 
+crit1 <- contaminants |> 
     dplyr::select(Location, Year) |>
     dplyr::distinct() |>
     dplyr::group_by(Location) |>
     dplyr::count() |>
     dplyr::filter(n == 1) |>
     dplyr::pull(Location)
-crit2
+crit1
 ```
 
 On retire ces sites pour l'étude de la taille de l'échantillon
 
 ```{R}
 data_count <- data_count |>
-    dplyr::filter(!Location %in% crit2) |>
+    dplyr::filter(!(Location %in% crit1)) |>
     dplyr::ungroup()
 ```
 
-#### Figures: Taille des échantillons par site 
+```{r, results = "asis", echo = FALSE, fig.width=12, fig.height=50, warning=FALSE}
+library(ggplot2)
+library(gridExtra)
 
-```{r, results = "asis", echo = FALSE}
+data_count <- data_count |> 
+    dplyr::mutate(n = cut(n, 
+        breaks = c(1, 2, 3, 5, 10, Inf), 
+        labels = c("1", "2", "3", "5-9", ">=10"), 
+        right = FALSE))
+
 combinaisons <- data_count |> 
     dplyr::select(Location, conpound_family) |> 
     unique()
 
-for (s in seq_len(nrow(combinaisons))[1:2]) {
+for(s in unique(combinaisons$Location)){
 
-    d <- data_count |> 
-        dplyr::filter(conpound_family == combinaisons$conpound_family[s] & Location == combinaisons$Location[s]) |>
-        dplyr::mutate(Year = as.character(Year))
-    
-    cat("\n##### ", combinaisons$conpound_family[s], "sur le site", combinaisons$Location[s],  "\n")
+    cat("\n### Site: ", s, "\n")
 
-    p <- ggplot(d, aes(x = Year, y = variable, fill = n)) + 
-        geom_tile(color = 'white') + 
-        coord_fixed() + 
-        viridis::scale_fill_viridis(trans = 'reverse') + 
-        scale_x_discrete(breaks = seq(1969, 2023, 1)) +
-        theme_minimal() +
-        theme(
-            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), 
-            panel.grid.major = element_blank(), 
-            panel.grid.minor = element_blank()
-        ) + ylab(NULL) + xlab(NULL) +
-        facet_wrap(~Species, nrow = 1)
+    conpounds <- dplyr::filter(combinaisons, Location == s) |>
+        dplyr::pull(conpound_family)
 
-    print(p)
+    figs <- list()
 
+    for (c in seq_along(conpounds)) {
+        d <- data_count |> 
+            tidyr::complete(
+                tidyr::nesting(Location, Species, conpound_family, variable), 
+                Year = min(Year):max(Year), 
+                fill = list(n = NA)
+            ) |>
+            dplyr::filter(conpound_family == conpounds[c] & Location == s)
+        
+        figs[[c]] <- ggplot(d, aes(x = Year, y = variable, fill = n)) + 
+            geom_tile(color = 'white') + 
+            # coord_fixed(xlim = range(data_count$Year)) + 
+            ggtitle(conpounds[c]) +
+            scale_x_continuous(breaks = seq(min(data_count$Year), max(data_count$Year), 1), limits = range(data_count$Year)) +
+            viridis::scale_fill_viridis(na.value=NA, discrete = TRUE, limits = levels(data_count$n), breaks = levels(data_count$n)) +
+            theme(
+                axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), 
+                panel.grid.major = element_blank(), 
+                panel.grid.minor = element_blank()
+            ) + xlab("Year of measurement") + ylab("Contaminant") +
+            labs(fill='Measurements (n)') + facet_wrap(~Species, ncol = 1) 
+    }
+
+    gridExtra::grid.arrange(grobs = figs, ncol = 1)
     cat("\n")
 
 }
