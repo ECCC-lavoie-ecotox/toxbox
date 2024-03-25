@@ -91,9 +91,7 @@ Afin de faciliter l'extraction des métadonnées, on convertit les fichiers .doc
 
 ## Convertion des documents Word en pdf
 
-Fonctionne seulement sur Microsoft Windows (testé sur v11), car cela requiert PowerShell pour effectuer la conversion.  
-
-
+Cette étape a été compété manuellement.
 
 ## Extraire les métadonnées du rapport
 
@@ -114,7 +112,7 @@ reports <- reports |> dplyr::mutate(
     })
 )
 
-frontpages <- purrr::map2_vec(reports$paths, reports$is_image, \(p, i) {
+frontpages <- purrr::map2_vec(reports$path, reports$is_image, \(p, i) {
         ifelse(isTRUE(i), 
             pdftools::pdf_ocr_text(pdf = p, pages = 1),
             pdftools::pdf_text(pdf = p)[[1]]
@@ -129,7 +127,8 @@ project_id <- purrr::map_vec(frontpages, \(f){
     toupper() |> 
     stringr::word(1) |> 
     stringr::str_replace_all("[.,]", "") |>
-    stringr::str_trim()
+    stringr::str_trim() |>
+    dplyr::na_if("")
 
 project_leader <- purrr::map_vec(frontpages, \(f){
         stringr::str_extract(f, "(?<=(project leader: |project leader |project manager: |manager: |study leader: |nom du requérant :)).*(?=\n)")
@@ -138,11 +137,23 @@ project_leader <- purrr::map_vec(frontpages, \(f){
     stringr::str_to_title() |>
     stringr::str_trim()
 
-project_title purrr::map_vec(frontpages, \(f){
-        stringr::str_extract(f, "(?<=(program)).*(?=\n\n)")
-    })
-
+project_dates <- frontpages |>
+    purrr::map_vec(\(f){
+        dates <- stringr::str_extract(f, "\\d{4}-\\d{2}-\\d{2}")
+        if(is.na(dates)) {
+            dates <- stringr::str_extract(f, "(?<=(date: )).*(?=\n)")
+        }
+        return(dates)
+    }) 
+        
+reportsProject <- data.frame(
+    report_id = reports$id, 
+    report_access_path = stringr::str_replace_all(reports$path, "C:/Users/VissaultS/Documents", "Z:"), 
+    project_id, project_leader, project_dates, project_title = NA
+)
 ```
+
+Le data.frame `reportsProject` est à la base du fichier "Z:\07-Données BD\BD_projects\projects_list_extract_25032024.xlsx".
 
 ## Valider l'existence de rapports de laboratoire dans le dossier `01-Projet et suivis`
 
@@ -160,8 +171,5 @@ potential_reports <- potential_reports |> dplyr::mutate(
     id = stringr::str_extract(file, regex_report_id) |> toupper(),
     in_lab_report_folder = !(id %in% reports$id)
 ) |> dplyr::arrange(in_lab_report_folder) |>
-    dplyr::mutate(file = stringr::str_replace(file, "C:/Users/VissaultS/Documents/", ""))
-
-write.csv2(potential_reports, "reports_outside.csv", row.names = FALSE, fileEncoding = "UTF-8")
-
+    dplyr::mutate(file = stringr::str_replace(file, "C:/Users/VissaultS/Documents/", "Z:"))
 ```
