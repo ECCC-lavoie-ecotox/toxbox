@@ -2,12 +2,7 @@
 #'
 #' @description This function is a quick integration procedure among all Excel files.
 #'
-#' @return The return value, if any, from executing the function.
-#' @examples
-#' \dontrun{
-#'  data(censored_data)
-#'  uncensored(censored_data)
-#' }
+#' @return a data.frame of contaminants
 #' @export 
 dbs_integration <- function(){
     contaminants_mapping <- list(
