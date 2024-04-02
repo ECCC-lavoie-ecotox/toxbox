@@ -2,7 +2,7 @@
 #'
 #' @description This function is a quick integration procedure among all Excel files.
 #'
-#' @return a data.frame of contaminants
+#' @return a data.frame of all contaminant measurements
 #' @export 
 dbs_integration <- function(){
     contaminants_mapping <- list(
@@ -95,7 +95,7 @@ dbs_integration <- function(){
                 readxl::read_excel(tmp_file, sheet = n) |>
                     dplyr::select("Year", "Location", "SampleID", "Species", s[1]:s[2]) |>
                     dplyr::mutate(source = f$path, conpound_family = n) |>
-                    dplyr::mutate(across(everything(), as.character)) |>
+                    dplyr::mutate(dplyr::across(everything(), as.character)) |>
                     tidyr::pivot_longer(cols = s[1]:s[2], names_to = "variable") |>
                     dplyr::filter(!is.na(value))
             }) |> dplyr::bind_rows()
