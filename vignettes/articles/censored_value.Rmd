@@ -3,10 +3,8 @@ title: "Fonctions pour traiter les valeurs censurées dans les bases de données
 author: "Rose Lacombe"
 date: "2024-01-05"
 output: 
-  #html_document:
-  prettydoc::html_pretty:
-    theme: leonids
-    highlight: kate
+  html_document:
+    highlight: monokai
     toc: no
 ---
 
