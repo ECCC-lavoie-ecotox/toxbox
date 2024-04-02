@@ -9,7 +9,7 @@
 #'  uncensored(censored_data)
 #' }
 #' @export 
-dbs_integration <- function(NULL){
+dbs_integration <- function(){
     contaminants_mapping <- list(
         pasl_herons = list(
             path = "Z:/01-Projets et suivis/PASL/GrandHeron/Base de donnees GBHE oeufs.xlsx",
