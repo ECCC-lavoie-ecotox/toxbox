@@ -58,7 +58,7 @@ dbs_integration <- function(){
         msc_lacombe = list(
             path = "Z:/01-Projets et suivis/Kyle Elliott/RoseLacombe/BD_Rose_MSc.xlsx",
             sheets = list(
-                BD_Rose_MSc = c("THg_dw", "Phe")
+                BD_Rose_MSc = c("THg_dw", "d15N_Phe")
             )
         )
         # Manque le sampleID
