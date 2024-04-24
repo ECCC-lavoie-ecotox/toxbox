@@ -10,14 +10,14 @@ dbs_integration <- function(){
             path = "Z:/01-Projets et suivis/PASL/GrandHeron/Base de donnees GBHE oeufs.xlsx",
             sheets = list(
                 PFC = c("PFBA", "PFDS"),
-                OC = c("1.2.4.5-Tetrachlorobenzene", "TCPM"),
-                PCB = c("PCB18/17", "Aroclor1260"),
-                BFR = c("BDE-7", "anti-DP"),
-                `non-ortho PCBs` = c("PCB-81", "PCB-169"),
-                `PCDDs & PCDFs` = c("2378-TCDD", "OCDF"),
+                OC = c("% Lipids", "TCPM"),
+                PCB = c("% Lipids", "Aroclor1260"),
+                BFR = c("% Lipids", "anti-DP"),
+                `non-ortho PCBs` = c("% Lipids", "PCB-169"),
+                `PCDDs & PCDFs` = c("% Lipids", "OCDF"),
                 Toxaphene = c("Total toxaphene", "B9-1025"),
-                FAME = c("Caproic Acid", "Docosahexaenoic Acid (DHA)"),
-                THg = c("THg-dw", "THg-ww"),
+                FAME = c("% Lipid", "Docosahexaenoic Acid (DHA)"),
+                THg = c("% Moisture", "THg-ww"),
                 SI = c("d13C", "d34S")
             )
         ),
@@ -25,34 +25,35 @@ dbs_integration <- function(){
             path = "Z:/01-Projets et suivis/PASL/EiderDuvet/Base de donnees COEI.xlsx",
             sheets = list(
                 PFC = c("PFBA", "PFDS"),
-                OC = c("1,2,4,5-Tetrachlorobenzene", "Mirex"),
-                PCB = c("PCB17/18", "PCB209"),
-                BFR = c("b-TBECH/BDE15", "BB101"),
-                THg = c("THg_dw", "THg_ww")
+                OC = c("% Lipids", "Mirex"),
+                PCB = c("% Lipids", "PCB209"),
+                BFR = c("% Moisture", "BB101"),
+                THg = c("% Moisture", "THg_ww")
             )
         ),
         pasl_gulls = list(
             path = "Z:/01-Projets et suivis/PASL/GoelandArgenté/Base de donnees HERG.xlsx",
             sheets = list(
                 PFC = c("PFBA", "PFDS"),
-                OC = c("1,2,4,5-Tetrachlorobenzene", "Mirex"),
-                PCB = c("PCB17/18", "PCB209"),
-                BFR = c("b-TBECH/BDE15", "BB101"),
-                THg = c("THg", "THg"),
+                OC = c("% Lipids", "Mirex"),
+                PCB = c("% Lipids", "PCB209"),
+                BFR = c("% Lipids", "BB101"),
+                THg = c("% Moisture", "THg"),
                 SI = c("d13C", "d34S")
             )
         ),
         pasl_gannets = list(
             path = "Z:/01-Projets et suivis/PASL/FouBassan/Stats_NOGA_Temporal2022/Integration_ST LAWRENCE_Gannets Trends 1969-2019_OC-PCB-FR Metals D-F FAME CNS.xlsx",
             sheets = list(
-                OC = c("1245TCB", "Mirex"),
-                PCB = c("PCB18/17", "Aroclor1260"),
-                BFR = c("BDE-15_B-TBECH", "anti-DP"),
+                OC = c("Moist", "Mirex"),
+                PCB = c("Moist", "Aroclor1260"),
+                BFR = c("Moist", "anti-DP"),
                 `Non-ortho PCBs` = c("PCB 81", "PCB 169"),
-                `PCDDs & PCDFs` = c("2378-TCDD", "OCDF"),
-                Metal = c("THg", "Al"),
-                FAME = c("caproic acid", "docosahexaenoic acid (DHA)"),
-                SI = c("d15N", "CN")
+                `PCDDs & PCDFs` = c("Moisture", "OCDF"),
+                Metal = c("Moist", "Al"),
+                FAME = c("Lipid", "docosahexaenoic acid (DHA)"),
+                SI = c("d15N", "CN"),
+                SImean = c("d15N", "CN")
             )
         ),
         msc_lacombe = list(
