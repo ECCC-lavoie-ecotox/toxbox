@@ -1,10 +1,10 @@
-#' Get integrated data 
+#' Measurements integration from scattered Excel files.
 #'
-#' @description This function is a quick integration procedure among all Excel files.
+#' @description Function performing measurements integration procedure from scattered Excel files.
 #'
 #' @return a data.frame of all contaminant measurements
 #' @export 
-dbs_integration <- function(){
+itgr_measurements <- function(){
     contaminants_mapping <- list(
         pasl_herons = list(
             path = "Z:/01-Projets et suivis/PASL/GrandHeron/Base de donnees GBHE oeufs.xlsx",
@@ -100,7 +100,8 @@ dbs_integration <- function(){
                     tidyr::pivot_longer(cols = s[1]:s[2], names_to = "variable") |>
                     dplyr::filter(!is.na(value))
             }) |> dplyr::bind_rows()
-    }) |> dplyr::bind_rows()
+        }) |> dplyr::bind_rows()
+
 }
 
 
