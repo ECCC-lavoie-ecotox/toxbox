@@ -41,9 +41,12 @@ jobs:
           extra-packages:  |
             rcmdcheck
             any::covr
-            any::goodpractice
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           error-on: '"error"'
+
+      - name: Code coverage
+        run: covr::package_coverage()
+        shell: Rscript {0}
