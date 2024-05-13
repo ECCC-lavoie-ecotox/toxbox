@@ -7,8 +7,9 @@
 itgr_samples_info <- function(){
 
     #### Field sample: Grand Héron (GBHE)
+    path <- "Z:/01-Projets et suivis/PASL/GrandHeron/Base de donnees GBHE oeufs.xlsx"
     tmp_file <- tempfile()
-    file.copy("Z:/01-Projets et suivis/PASL/GrandHeron/Base de donnees GBHE oeufs.xlsx", tmp_file, overwrite = TRUE)
+    file.copy(path, tmp_file, overwrite = TRUE)
 
     GBHE_field_lab_sample <- readxl::read_excel(tmp_file, "Sample Info") |>
         tidyr::pivot_longer(`Pooled from`:"...35", values_to = "id_field_sample", values_drop_na = TRUE) |>
@@ -24,11 +25,12 @@ itgr_samples_info <- function(){
             id_source_report = ReportCode
         ) |> dplyr::distinct() |>
         dplyr::mutate(id_species = "GBHE") |>
-        dplyr::mutate(collection_date = as.Date(collection_date))
+        dplyr::mutate(collection_date = as.Date(collection_date)) |>
+        dplyr::mutate(source = path)
 
     #### Field sample: Eiders (COEI)
-
-    file.copy("Z:/01-Projets et suivis/PASL/EiderDuvet/Base de donnees COEI.xlsx", tmp_file, overwrite = TRUE)
+    path <- "Z:/01-Projets et suivis/PASL/EiderDuvet/Base de donnees COEI.xlsx"
+    file.copy(path, tmp_file, overwrite = TRUE)
     COEI_field_lab_sample <- readxl::read_excel(tmp_file, "Sample Info") |>
         dplyr::select(
             id_field_sample = ClientID,
@@ -42,12 +44,12 @@ itgr_samples_info <- function(){
             id_source_report = ReportCode
         ) |> dplyr::distinct() |>
         dplyr::mutate(id_species = "COEI") |>
-        dplyr::mutate(collection_date = as.Date(collection_date))
-
+        dplyr::mutate(collection_date = as.Date(collection_date)) |>
+        dplyr::mutate(source = path)
     
     #### Field sample: Gulls (HERG)
-
-    file.copy("Z:/01-Projets et suivis/PASL/GoelandArgenté/Base de donnees HERG.xlsx", tmp_file, overwrite = TRUE)
+    path <- "Z:/01-Projets et suivis/PASL/GoelandArgenté/Base de donnees HERG.xlsx"
+    file.copy(path, tmp_file, overwrite = TRUE)
     HERG_field_lab_sample <- readxl::read_excel(tmp_file, "Sample Info") |>
         dplyr::select(
             id_field_sample = ClientID,
@@ -61,12 +63,12 @@ itgr_samples_info <- function(){
             id_source_report = ReportCode
         ) |> dplyr::distinct() |>
         dplyr::mutate(id_species = "HERG") |>
-        dplyr::mutate(collection_date = as.Date(collection_date))
-
+        dplyr::mutate(collection_date = as.Date(collection_date)) |>
+        dplyr::mutate(source = path)
     
     #### Field sample: Gannets (NAGO)
-
-    file.copy("Z:/01-Projets et suivis/PASL/FouBassan/Stats_NOGA_Temporal2022/Integration_ST LAWRENCE_Gannets Trends 1969-2019_OC-PCB-FR Metals D-F FAME CNS.xlsx", tmp_file, overwrite = TRUE)
+    path <- "Z:/01-Projets et suivis/PASL/FouBassan/Stats_NOGA_Temporal2022/Integration_ST LAWRENCE_Gannets Trends 1969-2019_OC-PCB-FR Metals D-F FAME CNS.xlsx"
+    file.copy(path, tmp_file, overwrite = TRUE)
     NOGA_field_lab_sample <- readxl::read_excel(tmp_file, "Analyses") |>
         dplyr::select(
             id_field_sample = USOXCapture_ID,
@@ -85,11 +87,13 @@ itgr_samples_info <- function(){
                 ) 
         ) |> dplyr::distinct() |>
         dplyr::mutate(id_site = "Ile Bonaventure") |>
-        dplyr::mutate(id_species = "NAGO") |>
-        dplyr::mutate(collection_date = as.Date(collection_date))
+        dplyr::mutate(id_species = "NOGA") |>
+        dplyr::mutate(collection_date = as.Date(collection_date)) |>
+        dplyr::mutate(source = path)
 
     #### Field sample: MSC Rose
-    file.copy("Z:/01-Projets et suivis/Kyle Elliott/RoseLacombe/BD_Rose_MSc.xlsx", tmp_file, overwrite = TRUE)
+    path <- "Z:/01-Projets et suivis/Kyle Elliott/RoseLacombe/BD_Rose_MSc.xlsx"
+    file.copy(path, tmp_file, overwrite = TRUE)
     MScLacombe_field_lab_sample <- readxl::read_excel(tmp_file, "BD_Rose_MSc") |>
         dplyr::select(
             id_field_sample = ClientID,
@@ -102,7 +106,8 @@ itgr_samples_info <- function(){
             id_project = "MscLacombe",
             collection_date = paste0(collection_date, "-01-01")
         ) |>
-        dplyr::mutate(collection_date = as.Date(collection_date))
+        dplyr::mutate(collection_date = as.Date(collection_date)) |>
+        dplyr::mutate(source = path)
     
     dplyr::bind_rows(
         GBHE_field_lab_sample, 
