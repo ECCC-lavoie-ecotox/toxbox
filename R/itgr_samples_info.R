@@ -51,6 +51,8 @@ itgr_samples_info <- function(){
     path <- "Z:/01-Projets et suivis/PASL/GoelandArgenté/Base de donnees HERG.xlsx"
     file.copy(path, tmp_file, overwrite = TRUE)
     HERG_field_lab_sample <- readxl::read_excel(tmp_file, "Sample Info") |>
+        tidyr::pivot_longer(`Pooled from`:"...19", values_to = "pool_sample", values_drop_na = TRUE) |>
+        dplyr::mutate(ClientID = ifelse(stringr::str_detect(tolower(ClientID), "pool"), pool_sample, ClientID)) |>
         dplyr::select(
             id_field_sample = ClientID,
             id_site = Location,
@@ -61,11 +63,12 @@ itgr_samples_info <- function(){
             collection_date = CollectionDate,
             received_date = ReceivedDate,
             id_source_report = ReportCode
-        ) |> dplyr::distinct() |>
+        ) |> 
+        dplyr::distinct() |>
         dplyr::mutate(id_species = "HERG") |>
         dplyr::mutate(collection_date = as.Date(collection_date)) |>
         dplyr::mutate(source = path)
-    
+
     #### Field sample: Gannets (NAGO)
     path <- "Z:/01-Projets et suivis/PASL/FouBassan/Stats_NOGA_Temporal2022/Integration_ST LAWRENCE_Gannets Trends 1969-2019_OC-PCB-FR Metals D-F FAME CNS.xlsx"
     file.copy(path, tmp_file, overwrite = TRUE)
