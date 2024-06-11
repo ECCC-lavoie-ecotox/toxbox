@@ -22,19 +22,37 @@
     <loc>/reference/censored_data.html</loc>
   </url>
   <url>
+    <loc>/reference/check_notnull_fields.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_pkeys_fields.html</loc>
+  </url>
+  <url>
     <loc>/reference/detect_cens.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_column_elements.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_tbl_fields_notnull.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_tbl_fields_pkey.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_tbl_info.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/itgr_measurements.html</loc>
-  </url>
-  <url>
-    <loc>/reference/itgr_samples_info.html</loc>
+    <loc>/reference/init_con.html</loc>
   </url>
   <url>
     <loc>/reference/remove_cens.html</loc>
+  </url>
+  <url>
+    <loc>/reference/search_tbl.html</loc>
   </url>
   <url>
     <loc>/reference/uncensored.html</loc>
