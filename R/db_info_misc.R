@@ -13,7 +13,7 @@
 #' @export
 #' 
 check_pkeys_fields <- function(tbl, fields){
-    pkeys <- get_tbl_fields_pkey(tbl)
+    pkeys <- get_tbl_fields_pkey(tbl = tbl)
     
     if(!all(pkeys %in% names(fields))){
         missing_pkeys <- pkeys[which(!pkeys %in% fields)] |>
@@ -37,7 +37,7 @@ check_pkeys_fields <- function(tbl, fields){
 #' 
 #' @export
 check_notnull_fields <- function(tbl, fields){
-    notnulls <- get_tbl_fields_notnull(tbl)
+    notnulls <- get_tbl_fields_notnull(tbl = tbl)
     
     if(!all(notnulls %in% fields)){
         missing_fields <- notnulls[which(!notnulls %in% fields)] |>
@@ -64,9 +64,8 @@ check_notnull_fields <- function(tbl, fields){
 #'  get_tbl_info("species")
 #' }
 #' @export
-get_tbl_info <- function(tbl) {
-    con <- init_con()
-    res <- DBI::dbGetQuery(con, glue::glue("SELECT * FROM pragma_table_info('{ tbl }');"))
+get_tbl_info <- function(con = init_con(), tbl = NULL) {
+    res <- DBI::dbGetQuery(con, glue::glue("SELECT * FROM pragma_table_info('{tbl}');"))
     on.exit(DBI::dbDisconnect(con))
     return(res)
 }
@@ -84,9 +83,9 @@ get_tbl_info <- function(tbl) {
 #' }
 #' @export
 get_tbl_fields_pkey <- function(tbl){
-    get_tbl_info(tbl) |>
-        dplyr::filter(rlang::.data$pk == 1) |>
-        dplyr::pull(rlang::.data$name)
+    get_tbl_info(tbl = tbl) |>
+        dplyr::filter(pk == 1) |>
+        dplyr::pull(name)
 }
 
 #' Get table not null fields
@@ -102,8 +101,8 @@ get_tbl_fields_pkey <- function(tbl){
 #' }
 #' @export
 get_tbl_fields_notnull <- function(tbl){
-    get_tbl_info(tbl) |>
-        dplyr::filter(rlang::.data$notnull == 1) |>
-        dplyr::pull(rlang::.data$name)
+    get_tbl_info(tbl = tbl) |>
+        dplyr::filter(notnull == 1) |>
+        dplyr::pull(name)
 }
 

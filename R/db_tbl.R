@@ -9,17 +9,18 @@
 #' @describeIn get_column_elements Get species name list.
 #' @export
 #' 
-add_entry_tbl <- function(tbl, ...){
+add_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
     fields <- list(...)
 
     check_pkeys_fields(tbl, fields)
     check_notnull_fields(tbl, fields)
 
     columns <- glue::glue_collapse(names(fields), ", ")
-    values <- glue::glue_collapse(fields, ", ")
+    values <- fields |> 
+        purrr::map(glue::single_quote) |> 
+        glue::glue_collapse(", ")
 
-    ddl <- glue::glue("INSERT INTO {tbl} ({columns}) VALUES ({glue::single_quote(values)});")
-    con <- init_con()
+    ddl <- glue::glue("INSERT INTO {tbl} ({columns}) VALUES ({values});")
     res <- DBI::dbSendStatement(con, ddl)
 
     if(DBI::dbHasCompleted(res)){
@@ -30,7 +31,7 @@ add_entry_tbl <- function(tbl, ...){
     on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
 }
 
-modify_entry_tbl <- function(tbl, ...){
+modify_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
     fields <- list(...)
 
     check_pkeys_fields(tbl, fields)
@@ -59,7 +60,6 @@ modify_entry_tbl <- function(tbl, ...){
             WHERE { criterias };
         ")
 
-        con <- init_con()
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
 
@@ -72,7 +72,7 @@ modify_entry_tbl <- function(tbl, ...){
     }
 }
 
-delete_entry_tbl <- function(tbl, ...){
+delete_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
     fields <- list(...)
 
     check_pkeys_fields(tbl, fields)
@@ -92,7 +92,6 @@ delete_entry_tbl <- function(tbl, ...){
             WHERE { criterias };
         ")
 
-        con <- init_con()
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
 
@@ -105,8 +104,7 @@ delete_entry_tbl <- function(tbl, ...){
     }
 }
 
-get_tbl <- function(tbl) {
-    con <- init_con()
+get_tbl <- function(con = init_con(), tbl = NULL) {
     DBI::dbReadTable(con, tbl)
     on.exit(DBI::dbDisconnect(con))
 }
