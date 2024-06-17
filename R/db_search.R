@@ -12,7 +12,7 @@
 #' }
 #' @export
 #' 
-search_tbl <- function(tbl,...){
+search_tbl <- function(con = NULL, tbl,...){
 
     fields <- list(...)
     tbl_fields <- DBI::dbListFields(con, tbl)
@@ -29,9 +29,8 @@ search_tbl <- function(tbl,...){
         }
     }) |> glue::glue_collapse(" OR ")
 
-    query <- glue::glue("SELECT * FROM {tbl} WHERE {search_criterias};")
+    query <- glue::glue_sql("SELECT * FROM {tbl} WHERE {search_criterias};", .con = con)
 
-    con <- init_con()
     res <- DBI::dbSendQuery(con, query)
     DBI::dbBind(res, fields)
 
@@ -44,7 +43,6 @@ search_tbl <- function(tbl,...){
     cli::cli_alert_info("Found {nrow(entries)} entries")
 
     on.exit(DBI::dbClearResult(res))
-    on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
 
     return(entries)
 }

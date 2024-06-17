@@ -9,18 +9,13 @@
 #' @describeIn get_column_elements Get species name list.
 #' @export
 #' 
-add_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
+add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(tbl, fields)
-    check_notnull_fields(tbl, fields)
+    check_pkeys_fields(con, tbl, fields)
+    check_notnull_fields(con, tbl, fields)
 
-    columns <- glue::glue_collapse(names(fields), ", ")
-    values <- fields |> 
-        purrr::map(glue::single_quote) |> 
-        glue::glue_collapse(", ")
-
-    ddl <- glue::glue("INSERT INTO {tbl} ({columns}) VALUES ({values});")
+    ddl <- glue::glue_sql("INSERT INTO {tbl} ({names(fields)*}) VALUES ({fields*});", .con = con)
     res <- DBI::dbSendStatement(con, ddl)
 
     if(DBI::dbHasCompleted(res)){
@@ -28,13 +23,12 @@ add_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
     }
     
     on.exit(DBI::dbClearResult(res))
-    on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
 }
 
-modify_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
+modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(tbl, fields)
+    check_pkeys_fields(con, tbl, fields)
 
     pkeys_tbl <- get_tbl_fields_pkey(tbl)
     target_row <- do.call("search_tbl", list(tbl = tbl) |> append(fields[pkeys_tbl]))
@@ -54,11 +48,11 @@ modify_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
             glue::glue("{n} = ${n}")
         }) |> glue::glue_collapse(" AND ")
 
-        ddl <- glue::glue("
+        ddl <- glue::glue_sql("
             UPDATE {tbl}
             SET { update_entries }
             WHERE { criterias };
-        ")
+        ", .con = con)
 
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
@@ -68,11 +62,10 @@ modify_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
         }
         
         on.exit(DBI::dbClearResult(res))
-        on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
     }
 }
 
-delete_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
+delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
     check_pkeys_fields(tbl, fields)
@@ -86,11 +79,11 @@ delete_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
             glue::glue("{n} = ${n}")
         }) |> glue::glue_collapse(" AND ")
 
-        ddl <- glue::glue("
+        ddl <- glue::glue_sql("
             DELETE 
             FROM {tbl}
             WHERE { criterias };
-        ")
+        ", .con = con)
 
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
@@ -100,11 +93,9 @@ delete_entry_tbl <- function(con = init_con(), tbl = NULL, ...){
         }
         
         on.exit(DBI::dbClearResult(res))
-        on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
     }
 }
 
-get_tbl <- function(con = init_con(), tbl = NULL) {
+get_tbl <- function(con = NULL, tbl = NULL) {
     DBI::dbReadTable(con, tbl)
-    on.exit(DBI::dbDisconnect(con))
 }
