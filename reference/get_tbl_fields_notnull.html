@@ -60,12 +60,16 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_tbl_fields_notnull</span><span class="op">(</span><span class="va">tbl</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_tbl_fields_notnull</span><span class="op">(</span><span class="va">con</span>, <span class="va">tbl</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>tbl</dt>
+    <dl><dt>con</dt>
+<dd><p>connexion object returned by DBI::dbConnect()</p></dd>
+
+
+<dt>tbl</dt>
 <dd><p>a character name of the table</p></dd>
 
 </dl></div>
