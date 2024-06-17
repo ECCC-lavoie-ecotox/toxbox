@@ -4,9 +4,11 @@
 \alias{get_tbl_info}
 \title{Get table fields properties (fkey, pkey, unique constraints etc.)}
 \usage{
-get_tbl_info(tbl)
+get_tbl_info(con = NULL, tbl = NULL)
 }
 \arguments{
+\item{con}{connexion object returned by DBI::dbConnect()}
+
 \item{tbl}{a character name of the table}
 }
 \value{

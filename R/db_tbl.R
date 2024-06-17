@@ -1,42 +1,37 @@
-#' DB getters
+#' Add entry within specified table
 #'
-#' Retrieve specific information from our admin database.
-#'
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param ... a vector of column names in the specified table
 #'
-#' 
-#' @describeIn get_column_elements Get species name list.
 #' @export
 #' 
-add_entry_tbl <- function(tbl, ...){
+add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(tbl, fields)
-    check_notnull_fields(tbl, fields)
+    check_pkeys_fields(con, tbl, fields)
+    check_notnull_fields(con, tbl, fields)
 
-    columns <- glue::glue_collapse(names(fields), ", ")
-    values <- glue::glue_collapse(fields, ", ")
-
-    ddl <- glue::glue("INSERT INTO {tbl} ({columns}) VALUES ({glue::single_quote(values)});")
-    con <- init_con()
+    ddl <- glue::glue_sql("INSERT INTO { tbl } ({ names(fields)* }) VALUES ({ fields* });", .con = con)
     res <- DBI::dbSendStatement(con, ddl)
 
     if(DBI::dbHasCompleted(res)){
-        cli::cli_alert_info("{ DBI::dbGetRowsAffected(res) } row inserted in {tbl}")
+        cli::cli_alert_info("{ DBI::dbGetRowsAffected(res) } row inserted in { tbl }")
     }
     
     on.exit(DBI::dbClearResult(res))
-    on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
 }
 
-modify_entry_tbl <- function(tbl, ...){
+#' @describeIn add_entry_tbl Modify entry within specified table.
+#' @export
+#' 
+modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(tbl, fields)
+    check_pkeys_fields(con, tbl, fields)
 
-    pkeys_tbl <- get_tbl_fields_pkey(tbl)
-    target_row <- do.call("search_tbl", list(tbl = tbl) |> append(fields[pkeys_tbl]))
+    pkeys_tbl <- get_tbl_fields_pkey(con, tbl)
+    target_row <- do.call("search_tbl", list(con = con, tbl = tbl) |> append(fields[pkeys_tbl]))
 
     if(nrow(target_row) > 1L){
         cli::cli_abort("Error: More than one row found with { fields[pkeys_tbl] }")
@@ -47,19 +42,18 @@ modify_entry_tbl <- function(tbl, ...){
 
         update_entries <- purrr::map(names(update_values), \(n){
             glue::glue("{n} = ${n}")
-        }) |> glue::glue_collapse(",")
+        }) |> glue::glue_sql_collapse(",")
 
         criterias <- purrr::map(names(pkeys_values), \(n){
             glue::glue("{n} = ${n}")
-        }) |> glue::glue_collapse(" AND ")
+        }) |> glue::glue_sql_collapse(" AND ")
 
-        ddl <- glue::glue("
-            UPDATE {tbl}
+        ddl <- glue::glue_sql("
+            UPDATE { tbl }
             SET { update_entries }
             WHERE { criterias };
-        ")
+        ", .con = con)
 
-        con <- init_con()
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
 
@@ -68,31 +62,32 @@ modify_entry_tbl <- function(tbl, ...){
         }
         
         on.exit(DBI::dbClearResult(res))
-        on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
     }
 }
 
-delete_entry_tbl <- function(tbl, ...){
+#' @describeIn add_entry_tbl Delete entry within specified table.
+#' @export
+#' 
+delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(tbl, fields)
-    pkeys_tbl <- get_tbl_fields_pkey(tbl)
-    target_row <- do.call("search_tbl", list(tbl = tbl) |> append(fields[pkeys_tbl]))
+    check_pkeys_fields(con, tbl, fields)
+    pkeys_tbl <- get_tbl_fields_pkey(con, tbl)
+    target_row <- do.call("search_tbl", list(con =  con, tbl = tbl) |> append(fields[pkeys_tbl]))
 
     if(nrow(target_row) > 1L){
         cli::cli_abort("Error: More than one row found with { fields[pkeys_tbl] }")
     } else {
         criterias <- purrr::map(names(fields[pkeys_tbl]), \(n){
             glue::glue("{n} = ${n}")
-        }) |> glue::glue_collapse(" AND ")
+        }) |> glue::glue_sql_collapse(" AND ")
 
-        ddl <- glue::glue("
+        ddl <- glue::glue_sql("
             DELETE 
-            FROM {tbl}
+            FROM { tbl }
             WHERE { criterias };
-        ")
+        ", .con = con)
 
-        con <- init_con()
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
 
@@ -101,12 +96,9 @@ delete_entry_tbl <- function(tbl, ...){
         }
         
         on.exit(DBI::dbClearResult(res))
-        on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
     }
 }
 
-get_tbl <- function(tbl) {
-    con <- init_con()
+get_tbl <- function(con = NULL, tbl = NULL) {
     DBI::dbReadTable(con, tbl)
-    on.exit(DBI::dbDisconnect(con))
 }

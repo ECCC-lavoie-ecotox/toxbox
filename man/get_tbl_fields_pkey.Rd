@@ -4,9 +4,11 @@
 \alias{get_tbl_fields_pkey}
 \title{Get table primary key fields}
 \usage{
-get_tbl_fields_pkey(tbl)
+get_tbl_fields_pkey(con, tbl)
 }
 \arguments{
+\item{con}{connexion object returned by DBI::dbConnect()}
+
 \item{tbl}{a character name of the table}
 }
 \value{

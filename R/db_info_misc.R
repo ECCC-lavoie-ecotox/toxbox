@@ -1,5 +1,6 @@
 #' Check if pkeys presents
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param fields a vector of column names in the specified table
 #' 
@@ -8,12 +9,12 @@
 #' 
 #' @examples
 #' \dontrun{
-#'  check_pkeys_fields("species", fields = c("species_id"))
+#'  check_pkeys_fields(con, "species", fields = c("species_id"))
 #' }
 #' @export
 #' 
-check_pkeys_fields <- function(tbl, fields){
-    pkeys <- get_tbl_fields_pkey(tbl)
+check_pkeys_fields <- function(con, tbl, fields){
+    pkeys <- get_tbl_fields_pkey(con, tbl = tbl)
     
     if(!all(pkeys %in% names(fields))){
         missing_pkeys <- pkeys[which(!pkeys %in% fields)] |>
@@ -24,6 +25,7 @@ check_pkeys_fields <- function(tbl, fields){
 
 #' Check if not null fields present
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param fields a vector of column names in the specified table
 #' 
@@ -32,14 +34,14 @@ check_pkeys_fields <- function(tbl, fields){
 #' 
 #' @examples
 #' \dontrun{
-#'  check_notnull_fields("species", fields = c("species_id"))
+#'  check_notnull_fields(con, "species", fields = c("species_id"))
 #' }
 #' 
 #' @export
-check_notnull_fields <- function(tbl, fields){
-    notnulls <- get_tbl_fields_notnull(tbl)
+check_notnull_fields <- function(con, tbl, fields){
+    notnulls <- get_tbl_fields_notnull(con, tbl = tbl)
     
-    if(!all(notnulls %in% fields)){
+    if(!all(notnulls %in% names(fields))){
         missing_fields <- notnulls[which(!notnulls %in% fields)] |>
             glue::glue_collapse(", ", last = "and")
         cli::cli_abort("{ missing_fields } cannot be null(s)")
@@ -48,6 +50,7 @@ check_notnull_fields <- function(tbl, fields){
 
 #' Get table fields properties (fkey, pkey, unique constraints etc.)
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' 
 #' @return
@@ -64,15 +67,15 @@ check_notnull_fields <- function(tbl, fields){
 #'  get_tbl_info("species")
 #' }
 #' @export
-get_tbl_info <- function(tbl) {
-    con <- init_con()
-    res <- DBI::dbGetQuery(con, glue::glue("SELECT * FROM pragma_table_info('{ tbl }');"))
-    on.exit(DBI::dbDisconnect(con))
+get_tbl_info <- function(con = NULL, tbl = NULL) {
+    q <- glue::glue_sql("SELECT * FROM pragma_table_info({tbl});", .con = con)
+    res <- DBI::dbGetQuery(con, q)
     return(res)
 }
 
 #' Get table primary key fields
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' 
 #' @return
@@ -83,14 +86,15 @@ get_tbl_info <- function(tbl) {
 #'  get_tbl_fields_pkey("species")
 #' }
 #' @export
-get_tbl_fields_pkey <- function(tbl){
-    get_tbl_info(tbl) |>
-        dplyr::filter(rlang::.data$pk == 1) |>
-        dplyr::pull(rlang::.data$name)
+get_tbl_fields_pkey <- function(con, tbl){
+    get_tbl_info(con, tbl = tbl) |>
+        dplyr::filter(pk == 1) |>
+        dplyr::pull(name)
 }
 
 #' Get table not null fields
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' 
 #' @return
@@ -101,9 +105,9 @@ get_tbl_fields_pkey <- function(tbl){
 #'  get_tbl_fields_notnull("species")
 #' }
 #' @export
-get_tbl_fields_notnull <- function(tbl){
-    get_tbl_info(tbl) |>
-        dplyr::filter(rlang::.data$notnull == 1) |>
-        dplyr::pull(rlang::.data$name)
+get_tbl_fields_notnull <- function(con, tbl){
+    get_tbl_info(con, tbl = tbl) |>
+        dplyr::filter(notnull == 1) |>
+        dplyr::pull(name)
 }
 

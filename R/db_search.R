@@ -1,5 +1,6 @@
 #' search_tbl
 #'
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param ... table fields with search value
 #' 
@@ -8,11 +9,11 @@
 #' 
 #' @examples
 #' \dontrun{
-#'  search_tbl("species", genus = "%Poo%")
+#'  search_tbl(con, "species", genus = "%Poo%")
 #' }
 #' @export
 #' 
-search_tbl <- function(tbl,...){
+search_tbl <- function(con = NULL, tbl = NULL,...){
 
     fields <- list(...)
     tbl_fields <- DBI::dbListFields(con, tbl)
@@ -22,18 +23,16 @@ search_tbl <- function(tbl,...){
     stopifnot(all(names(fields) %in% tbl_fields))
 
     search_criterias <- purrr::map2(names(fields), fields, \(n, p){
-        if(length(p) == 1L){
-            glue::glue("{n} LIKE ${n}")
+        if(length(p) > 1L){
+            glue::glue_sql("{`n`} IN ({ p* })", .con = con)
         } else {
-            cli::cli_abort("{n} as more than one search criterias")
+            glue::glue_sql("{`n`} LIKE { p }", .con = con)
         }
-    }) |> glue::glue_collapse(" OR ")
+    }) |> glue::glue_sql_collapse(" OR ")
 
-    query <- glue::glue("SELECT * FROM {tbl} WHERE {search_criterias};")
-
-    con <- init_con()
+    query <- glue::glue_sql("SELECT * FROM { tbl } WHERE { search_criterias };", .con = con)
+    
     res <- DBI::dbSendQuery(con, query)
-    DBI::dbBind(res, fields)
 
     entries <- list()
     while (!DBI::dbHasCompleted(res)) {
@@ -41,10 +40,9 @@ search_tbl <- function(tbl,...){
     }
     entries <- dplyr::bind_rows(entries)
 
-    cli::cli_alert_info("Found {nrow(entries)} entries")
+    cli::cli_alert_info("Found { nrow(entries) } entries")
 
     on.exit(DBI::dbClearResult(res))
-    on.exit(DBI::dbDisconnect(con), add=TRUE, after = TRUE)
 
     return(entries)
 }
