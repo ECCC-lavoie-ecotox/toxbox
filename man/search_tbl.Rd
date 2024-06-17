@@ -4,9 +4,11 @@
 \alias{search_tbl}
 \title{search_tbl}
 \usage{
-search_tbl(tbl, ...)
+search_tbl(con = NULL, tbl = NULL, ...)
 }
 \arguments{
+\item{con}{connexion object returned by DBI::dbConnect()}
+
 \item{tbl}{a character name of the table}
 
 \item{...}{table fields with search value}
@@ -19,6 +21,6 @@ search_tbl
 }
 \examples{
 \dontrun{
- search_tbl("species", genus = "\%Poo\%")
+ search_tbl(con, "species", genus = "\%Poo\%")
 }
 }

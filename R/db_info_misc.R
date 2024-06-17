@@ -1,5 +1,6 @@
 #' Check if pkeys presents
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param fields a vector of column names in the specified table
 #' 
@@ -8,7 +9,7 @@
 #' 
 #' @examples
 #' \dontrun{
-#'  check_pkeys_fields("species", fields = c("species_id"))
+#'  check_pkeys_fields(con, "species", fields = c("species_id"))
 #' }
 #' @export
 #' 
@@ -24,6 +25,7 @@ check_pkeys_fields <- function(con, tbl, fields){
 
 #' Check if not null fields present
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param fields a vector of column names in the specified table
 #' 
@@ -32,7 +34,7 @@ check_pkeys_fields <- function(con, tbl, fields){
 #' 
 #' @examples
 #' \dontrun{
-#'  check_notnull_fields("species", fields = c("species_id"))
+#'  check_notnull_fields(con, "species", fields = c("species_id"))
 #' }
 #' 
 #' @export
@@ -48,6 +50,7 @@ check_notnull_fields <- function(con, tbl, fields){
 
 #' Get table fields properties (fkey, pkey, unique constraints etc.)
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' 
 #' @return
@@ -72,6 +75,7 @@ get_tbl_info <- function(con = NULL, tbl = NULL) {
 
 #' Get table primary key fields
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' 
 #' @return
@@ -90,6 +94,7 @@ get_tbl_fields_pkey <- function(con, tbl){
 
 #' Get table not null fields
 #' 
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' 
 #' @return

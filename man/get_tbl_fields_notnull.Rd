@@ -4,9 +4,11 @@
 \alias{get_tbl_fields_notnull}
 \title{Get table not null fields}
 \usage{
-get_tbl_fields_notnull(tbl)
+get_tbl_fields_notnull(con, tbl)
 }
 \arguments{
+\item{con}{connexion object returned by DBI::dbConnect()}
+
 \item{tbl}{a character name of the table}
 }
 \value{

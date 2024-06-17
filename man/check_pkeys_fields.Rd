@@ -4,9 +4,11 @@
 \alias{check_pkeys_fields}
 \title{Check if pkeys presents}
 \usage{
-check_pkeys_fields(tbl, fields)
+check_pkeys_fields(con, tbl, fields)
 }
 \arguments{
+\item{con}{connexion object returned by DBI::dbConnect()}
+
 \item{tbl}{a character name of the table}
 
 \item{fields}{a vector of column names in the specified table}
@@ -19,6 +21,6 @@ Check if pkeys presents
 }
 \examples{
 \dontrun{
- check_pkeys_fields("species", fields = c("species_id"))
+ check_pkeys_fields(con, "species", fields = c("species_id"))
 }
 }

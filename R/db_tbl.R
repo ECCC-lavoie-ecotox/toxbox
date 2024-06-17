@@ -1,12 +1,9 @@
-#' DB getters
+#' Add entry within specified table
 #'
-#' Retrieve specific information from our admin database.
-#'
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param ... a vector of column names in the specified table
 #'
-#' 
-#' @describeIn get_column_elements Get species name list.
 #' @export
 #' 
 add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
@@ -25,6 +22,9 @@ add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     on.exit(DBI::dbClearResult(res))
 }
 
+#' @describeIn add_entry_tbl Modify entry within specified table.
+#' @export
+#' 
 modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
@@ -65,6 +65,9 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     }
 }
 
+#' @describeIn add_entry_tbl Delete entry within specified table.
+#' @export
+#' 
 delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 

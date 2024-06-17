@@ -1,5 +1,6 @@
 #' search_tbl
 #'
+#' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param ... table fields with search value
 #' 

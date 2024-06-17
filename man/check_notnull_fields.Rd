@@ -4,9 +4,11 @@
 \alias{check_notnull_fields}
 \title{Check if not null fields present}
 \usage{
-check_notnull_fields(tbl, fields)
+check_notnull_fields(con, tbl, fields)
 }
 \arguments{
+\item{con}{connexion object returned by DBI::dbConnect()}
+
 \item{tbl}{a character name of the table}
 
 \item{fields}{a vector of column names in the specified table}
@@ -19,7 +21,7 @@ Check if not null fields present
 }
 \examples{
 \dontrun{
- check_notnull_fields("species", fields = c("species_id"))
+ check_notnull_fields(con, "species", fields = c("species_id"))
 }
 
 }
