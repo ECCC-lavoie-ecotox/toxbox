@@ -1,24 +1,5 @@
 context("Add, delete, update entries in table")
 
-test_db <- function(mockData = FALSE, env = parent.frame()) {
-    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
-
-    DBI::dbExecute(con, "DROP TABLE IF EXISTS 'species';")
-    DBI::dbExecute(con, "CREATE TABLE 'species' (
-            species_id TEXT, 
-            genus TEXT, 
-            species TEXT NOT NULL,
-            PRIMARY KEY (species_id)
-        );")
-
-    if(mockData){
-        DBI::dbExecute(con, "INSERT INTO 'species' (species_id, genus, species) VALUES ('TSN', 'Lupus', 'Lupus lupus');")
-    }
-
-    withr::defer(DBI::dbDisconnect(con), env)
-    return(con)
-}
-
 test_that("add_entry_tbl() success", {
 
     con <- test_db()
@@ -78,7 +59,7 @@ test_that("delete_entry_tbl() success", {
         species_id = "TSN"
     )
     
-    rs <- DBI::dbGetQuery(con,"SELECT * FROM species;")
+    rs <- DBI::dbGetQuery(con,"SELECT * FROM species WHERE species_id = 'TSN';")
     testthat::expect_true(nrow(rs) == 0L)
 
     withr::deferred_run()

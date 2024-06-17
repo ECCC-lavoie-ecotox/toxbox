@@ -15,11 +15,11 @@ add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     check_pkeys_fields(con, tbl, fields)
     check_notnull_fields(con, tbl, fields)
 
-    ddl <- glue::glue_sql("INSERT INTO {tbl} ({names(fields)*}) VALUES ({fields*});", .con = con)
+    ddl <- glue::glue_sql("INSERT INTO { tbl } ({ names(fields)* }) VALUES ({ fields* });", .con = con)
     res <- DBI::dbSendStatement(con, ddl)
 
     if(DBI::dbHasCompleted(res)){
-        cli::cli_alert_info("{ DBI::dbGetRowsAffected(res) } row inserted in {tbl}")
+        cli::cli_alert_info("{ DBI::dbGetRowsAffected(res) } row inserted in { tbl }")
     }
     
     on.exit(DBI::dbClearResult(res))
@@ -49,7 +49,7 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
         }) |> glue::glue_sql_collapse(" AND ")
 
         ddl <- glue::glue_sql("
-            UPDATE {tbl}
+            UPDATE { tbl }
             SET { update_entries }
             WHERE { criterias };
         ", .con = con)
@@ -81,7 +81,7 @@ delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 
         ddl <- glue::glue_sql("
             DELETE 
-            FROM {tbl}
+            FROM { tbl }
             WHERE { criterias };
         ", .con = con)
 
