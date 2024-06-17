@@ -27,7 +27,7 @@ search_tbl <- function(con = NULL, tbl,...){
         } else {
             cli::cli_abort("{n} as more than one search criterias")
         }
-    }) |> glue::glue_collapse(" OR ")
+    }) |> glue::glue_sql_collapse(" OR ")
 
     query <- glue::glue_sql("SELECT * FROM {tbl} WHERE {search_criterias};", .con = con)
 

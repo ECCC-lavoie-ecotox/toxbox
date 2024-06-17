@@ -30,8 +30,8 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 
     check_pkeys_fields(con, tbl, fields)
 
-    pkeys_tbl <- get_tbl_fields_pkey(tbl)
-    target_row <- do.call("search_tbl", list(tbl = tbl) |> append(fields[pkeys_tbl]))
+    pkeys_tbl <- get_tbl_fields_pkey(con, tbl)
+    target_row <- do.call("search_tbl", list(con = con, tbl = tbl) |> append(fields[pkeys_tbl]))
 
     if(nrow(target_row) > 1L){
         cli::cli_abort("Error: More than one row found with { fields[pkeys_tbl] }")
@@ -42,11 +42,11 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 
         update_entries <- purrr::map(names(update_values), \(n){
             glue::glue("{n} = ${n}")
-        }) |> glue::glue_collapse(",")
+        }) |> glue::glue_sql_collapse(",")
 
         criterias <- purrr::map(names(pkeys_values), \(n){
             glue::glue("{n} = ${n}")
-        }) |> glue::glue_collapse(" AND ")
+        }) |> glue::glue_sql_collapse(" AND ")
 
         ddl <- glue::glue_sql("
             UPDATE {tbl}
@@ -68,16 +68,16 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(tbl, fields)
-    pkeys_tbl <- get_tbl_fields_pkey(tbl)
-    target_row <- do.call("search_tbl", list(tbl = tbl) |> append(fields[pkeys_tbl]))
+    check_pkeys_fields(con, tbl, fields)
+    pkeys_tbl <- get_tbl_fields_pkey(con, tbl)
+    target_row <- do.call("search_tbl", list(con =  con, tbl = tbl) |> append(fields[pkeys_tbl]))
 
     if(nrow(target_row) > 1L){
         cli::cli_abort("Error: More than one row found with { fields[pkeys_tbl] }")
     } else {
         criterias <- purrr::map(names(fields[pkeys_tbl]), \(n){
             glue::glue("{n} = ${n}")
-        }) |> glue::glue_collapse(" AND ")
+        }) |> glue::glue_sql_collapse(" AND ")
 
         ddl <- glue::glue_sql("
             DELETE 
