@@ -4,7 +4,7 @@
 \alias{check_fields_exist}
 \title{Check if fields present in table}
 \usage{
-check_fields_exist(con, tbl, ...)
+check_fields_exist(con, tbl, fields)
 }
 \arguments{
 \item{con}{connexion object returned by DBI::dbConnect()}
