@@ -23,6 +23,16 @@ test_that("get_tbl_notnulls() success", {
     withr::deferred_run()     
 })
 
+test_that("check_fields_exist() error", {
+    con <- test_db()
+    mockery::stub(check_fields_exist, "get_tbl_info", tbl_info_test)
+    testthat::expect_error(
+        check_fields_exist(con, "species", "test"), 
+        "Fields test is/are not present in table species", fixed = TRUE
+    )
+    withr::deferred_run()     
+})
+
 test_that("check_fields_notnulls() error", {
     con <- test_db()
     mockery::stub(check_fields_notnulls, "get_tbl_notnulls", "species")  

@@ -9,9 +9,9 @@
 add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_fields_exist(con, tbl, fields)
-    check_fields_pkeys(con, tbl, fields)
-    check_fields_notnulls(con, tbl, fields)
+    check_fields_exist(con, tbl, names(fields))
+    check_fields_pkeys(con, tbl, names(fields))
+    check_fields_notnulls(con, tbl, names(fields))
 
     ddl <- glue::glue_sql("INSERT INTO { tbl } ({ names(fields)* }) VALUES ({ fields* });", .con = con)
     res <- DBI::dbSendStatement(con, ddl)
@@ -25,8 +25,8 @@ add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_fields_exist(con, tbl, fields)
-    check_fields_pkeys(con, tbl, fields)
+    check_fields_exist(con, tbl, names(fields))
+    check_fields_pkeys(con, tbl, names(fields))
 
     pkeys_tbl <- get_tbl_pkeys(con, tbl)
     target_row <- do.call("search_tbl", list(con = con, tbl = tbl) |> append(fields[pkeys_tbl]))
@@ -65,8 +65,8 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_fields_exist(con, tbl, fields)
-    check_fields_pkeys(con, tbl, fields)
+    check_fields_exist(con, tbl, names(fields))
+    check_fields_pkeys(con, tbl, names(fields))
 
     pkeys_tbl <- get_tbl_pkeys(con, tbl)
     target_row <- do.call("search_tbl", list(con =  con, tbl = tbl) |> append(fields[pkeys_tbl]))
