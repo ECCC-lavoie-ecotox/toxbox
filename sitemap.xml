@@ -25,22 +25,25 @@
     <loc>/reference/censored_data.html</loc>
   </url>
   <url>
-    <loc>/reference/check_notnull_fields.html</loc>
+    <loc>/reference/check_fields_exist.html</loc>
   </url>
   <url>
-    <loc>/reference/check_pkeys_fields.html</loc>
+    <loc>/reference/check_fields_notnulls.html</loc>
+  </url>
+  <url>
+    <loc>/reference/check_fields_pkeys.html</loc>
   </url>
   <url>
     <loc>/reference/detect_cens.html</loc>
   </url>
   <url>
-    <loc>/reference/get_tbl_fields_notnull.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_tbl_fields_pkey.html</loc>
-  </url>
-  <url>
     <loc>/reference/get_tbl_info.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_tbl_notnulls.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_tbl_pkeys.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
@@ -53,6 +56,9 @@
   </url>
   <url>
     <loc>/reference/search_tbl.html</loc>
+  </url>
+  <url>
+    <loc>/reference/tbl_info_test.html</loc>
   </url>
   <url>
     <loc>/reference/uncensored.html</loc>
