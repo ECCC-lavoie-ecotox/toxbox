@@ -3,6 +3,7 @@
 #' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param ... table fields with search value
+#' @param nfetch data fetch size (default = 100)
 #' 
 #' @return
 #' A data.frame with query results
@@ -13,14 +14,10 @@
 #' }
 #' @export
 #' 
-search_tbl <- function(con = NULL, tbl = NULL,...){
+search_tbl <- function(con = NULL, tbl = NULL, ..., nfetch = 100){
 
     fields <- list(...)
-    tbl_fields <- DBI::dbListFields(con, tbl)
-
-    # Safety assertions
-    stopifnot(!any(names(fields) |> is.null()))
-    stopifnot(all(names(fields) %in% tbl_fields))
+    check_fields_exist(con, tbl, names(fields))
 
     search_criterias <- purrr::map2(names(fields), fields, \(n, p){
         if(length(p) > 1L){
@@ -31,12 +28,11 @@ search_tbl <- function(con = NULL, tbl = NULL,...){
     }) |> glue::glue_sql_collapse(" OR ")
 
     query <- glue::glue_sql("SELECT * FROM { tbl } WHERE { search_criterias };", .con = con)
-    
     res <- DBI::dbSendQuery(con, query)
 
     entries <- list()
     while (!DBI::dbHasCompleted(res)) {
-        entries[[length(entries)+1]] <- DBI::dbFetch(res, 100)
+        entries[[length(entries)+1]] <- DBI::dbFetch(res, nfetch)
     }
     entries <- dplyr::bind_rows(entries)
 
