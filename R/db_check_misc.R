@@ -1,20 +1,38 @@
+#' Check if fields present in table
+#' 
+#' @param con connexion object returned by DBI::dbConnect()
+#' @param tbl a character name of the table
+#' @param fields a vector of column names in the specified table
+#' 
+#' @examples
+#' \dontrun{
+#'      check_fields_exist(con, "species", species_id = "test")
+#' }
+#' @export
+#' 
+check_fields_exist <- function(con, tbl, fields){
+    columns <- get_tbl_info(con, tbl = tbl) |> dplyr::pull(name)
+    if(!all(names(fields) %in% columns)){
+        unknown_fields <- names(fields)[which(!names(fields) %in% columns)] |>
+            glue::glue_collapse(", ", last = "and")
+        cli::cli_abort("Fields { unknown_fields } is/are not present in table { tbl }")       
+    }
+}
+
 #' Check if pkeys presents
 #' 
 #' @param con connexion object returned by DBI::dbConnect()
 #' @param tbl a character name of the table
 #' @param fields a vector of column names in the specified table
 #' 
-#' @return
-#' Logical test result.
-#' 
 #' @examples
 #' \dontrun{
-#'  check_pkeys_fields(con, "species", fields = c("species_id"))
+#'  check_fields_pkeys(con, "species", fields = c("species_id"))
 #' }
 #' @export
 #' 
-check_pkeys_fields <- function(con, tbl, fields){
-    pkeys <- get_tbl_fields_pkey(con, tbl = tbl)
+check_fields_pkeys <- function(con, tbl, fields){
+    pkeys <- get_tbl_pkeys(con, tbl = tbl)
     
     if(!all(pkeys %in% names(fields))){
         missing_pkeys <- pkeys[which(!pkeys %in% fields)] |>
@@ -29,17 +47,14 @@ check_pkeys_fields <- function(con, tbl, fields){
 #' @param tbl a character name of the table
 #' @param fields a vector of column names in the specified table
 #' 
-#' @return
-#' Logical test result.
-#' 
 #' @examples
 #' \dontrun{
-#'  check_notnull_fields(con, "species", fields = c("species_id"))
+#'  check_fields_notnulls(con, "species", fields = c("species_id"))
 #' }
 #' 
 #' @export
-check_notnull_fields <- function(con, tbl, fields){
-    notnulls <- get_tbl_fields_notnull(con, tbl = tbl)
+check_fields_notnulls <- function(con, tbl, fields){
+    notnulls <- get_tbl_notnulls(con, tbl = tbl)
     
     if(!all(notnulls %in% names(fields))){
         missing_fields <- notnulls[which(!notnulls %in% fields)] |>
@@ -64,7 +79,7 @@ check_notnull_fields <- function(con, tbl, fields){
 #' 
 #' @examples
 #' \dontrun{
-#'  get_tbl_info("species")
+#'      get_tbl_info("species")
 #' }
 #' @export
 get_tbl_info <- function(con = NULL, tbl = NULL) {
@@ -83,10 +98,10 @@ get_tbl_info <- function(con = NULL, tbl = NULL) {
 #' 
 #' @examples
 #' \dontrun{
-#'  get_tbl_fields_pkey("species")
+#'      get_tbl_pkeys("species")
 #' }
 #' @export
-get_tbl_fields_pkey <- function(con, tbl){
+get_tbl_pkeys <- function(con, tbl){
     get_tbl_info(con, tbl = tbl) |>
         dplyr::filter(pk == 1) |>
         dplyr::pull(name)
@@ -102,10 +117,10 @@ get_tbl_fields_pkey <- function(con, tbl){
 #' 
 #' @examples
 #' \dontrun{
-#'  get_tbl_fields_notnull("species")
+#'  get_tbl_notnulls("species")
 #' }
 #' @export
-get_tbl_fields_notnull <- function(con, tbl){
+get_tbl_notnulls <- function(con, tbl){
     get_tbl_info(con, tbl = tbl) |>
         dplyr::filter(notnull == 1) |>
         dplyr::pull(name)

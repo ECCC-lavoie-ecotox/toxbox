@@ -9,15 +9,12 @@
 add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(con, tbl, fields)
-    check_notnull_fields(con, tbl, fields)
+    check_fields_exist(con, tbl, fields)
+    check_fields_pkeys(con, tbl, fields)
+    check_fields_notnulls(con, tbl, fields)
 
     ddl <- glue::glue_sql("INSERT INTO { tbl } ({ names(fields)* }) VALUES ({ fields* });", .con = con)
     res <- DBI::dbSendStatement(con, ddl)
-
-    if(DBI::dbHasCompleted(res)){
-        cli::cli_alert_info("{ DBI::dbGetRowsAffected(res) } row inserted in { tbl }")
-    }
     
     on.exit(DBI::dbClearResult(res))
 }
@@ -28,9 +25,10 @@ add_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(con, tbl, fields)
+    check_fields_exist(con, tbl, fields)
+    check_fields_pkeys(con, tbl, fields)
 
-    pkeys_tbl <- get_tbl_fields_pkey(con, tbl)
+    pkeys_tbl <- get_tbl_pkeys(con, tbl)
     target_row <- do.call("search_tbl", list(con = con, tbl = tbl) |> append(fields[pkeys_tbl]))
 
     if(nrow(target_row) > 1L){
@@ -56,10 +54,6 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
-
-        if(DBI::dbHasCompleted(res)){
-            cli::cli_alert_info("Entry with { criterias } updated in { tbl }")
-        }
         
         on.exit(DBI::dbClearResult(res))
     }
@@ -71,8 +65,10 @@ modify_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
     fields <- list(...)
 
-    check_pkeys_fields(con, tbl, fields)
-    pkeys_tbl <- get_tbl_fields_pkey(con, tbl)
+    check_fields_exist(con, tbl, fields)
+    check_fields_pkeys(con, tbl, fields)
+
+    pkeys_tbl <- get_tbl_pkeys(con, tbl)
     target_row <- do.call("search_tbl", list(con =  con, tbl = tbl) |> append(fields[pkeys_tbl]))
 
     if(nrow(target_row) > 1L){
@@ -90,10 +86,6 @@ delete_entry_tbl <- function(con = NULL, tbl = NULL, ...){
 
         res <- DBI::dbSendStatement(con, ddl)
         DBI::dbBind(res, fields)
-
-        if(DBI::dbHasCompleted(res)){
-            cli::cli_alert_info("Entry with { criterias } deleted in { tbl }")
-        }
         
         on.exit(DBI::dbClearResult(res))
     }
