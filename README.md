@@ -13,12 +13,7 @@ You can install the development version of toxbox from [GitHub](https://github.c
 devtools::install_github("ECCC-lavoie-ecotox/toxbox")
 ```
 
-## Example
+## Read the documentation
 
-This is a basic example which shows you how to solve a common problem:
-
-``` r
-library(toxbox)
-## basic example code
-```
+All functions are documented at this address: https://eccc-lavoie-ecotox.github.io/toxbox
 
