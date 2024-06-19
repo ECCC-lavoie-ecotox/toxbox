@@ -19,7 +19,10 @@
     <loc>/index.html</loc>
   </url>
   <url>
-    <loc>/reference/add_entry_tbl.html</loc>
+    <loc>/reference/bulk_insert_entry.html</loc>
+  </url>
+  <url>
+    <loc>/reference/bulk_insert_test.html</loc>
   </url>
   <url>
     <loc>/reference/censored_data.html</loc>
@@ -50,6 +53,9 @@
   </url>
   <url>
     <loc>/reference/init_con.html</loc>
+  </url>
+  <url>
+    <loc>/reference/insert_entry.html</loc>
   </url>
   <url>
     <loc>/reference/remove_cens.html</loc>
