@@ -9,18 +9,28 @@
 #' @importFrom shiny NS tagList 
 mod_table_view_ui <- function(id){
   ns <- NS(id)
-  tagList(
- 
+  bslib::card(
+    bslib::card_header(
+      "View and edit table",
+      actionButton("Add entry", "Add", class="btn btn-sm", style = "align-self:flex-end;")
+    ),
+    bslib::card_body(
+      reactable::reactableOutput(ns("table"))
+    )
   )
 }
-    
 #' table_view Server Functions
 #'
 #' @noRd 
-mod_table_view_server <- function(id){
-  moduleServer( id, function(input, output, session){
+mod_table_view_server <- function(id, r){
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
- 
+    observe({
+      dataTable <- get_tbl(con, r$activeTable)
+      output$table <- reactable::renderReactable({
+        reactable::reactable(dataTable)
+      })
+    })
   })
 }
     
