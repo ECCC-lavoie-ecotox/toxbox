@@ -4,7 +4,7 @@
 \alias{search_tbl}
 \title{search_tbl}
 \usage{
-search_tbl(con = NULL, tbl = NULL, ...)
+search_tbl(con = NULL, tbl = NULL, ..., nfetch = 100)
 }
 \arguments{
 \item{con}{connexion object returned by DBI::dbConnect()}
@@ -12,6 +12,8 @@ search_tbl(con = NULL, tbl = NULL, ...)
 \item{tbl}{a character name of the table}
 
 \item{...}{table fields with search value}
+
+\item{nfetch}{data fetch size (default = 100)}
 }
 \value{
 A data.frame with query results

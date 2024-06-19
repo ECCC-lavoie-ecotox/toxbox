@@ -12,9 +12,9 @@
 #' 
 check_fields_exist <- function(con, tbl, fields){
     columns <- get_tbl_info(con, tbl = tbl) |> dplyr::pull(name)
-    if(!all(names(fields) %in% columns)){
-        unknown_fields <- names(fields)[which(!names(fields) %in% columns)] |>
-            glue::glue_collapse(", ", last = "and")
+    if(!all(fields %in% columns)){
+        unknown_fields <- fields[which(!fields %in% columns)] |>
+            glue::glue_collapse(", ", last = " and ")
         cli::cli_abort("Fields { unknown_fields } is/are not present in table { tbl }")       
     }
 }
@@ -34,7 +34,7 @@ check_fields_exist <- function(con, tbl, fields){
 check_fields_pkeys <- function(con, tbl, fields){
     pkeys <- get_tbl_pkeys(con, tbl = tbl)
     
-    if(!all(pkeys %in% names(fields))){
+    if(!all(pkeys %in% fields)){
         missing_pkeys <- pkeys[which(!pkeys %in% fields)] |>
             glue::glue_collapse(", ", last = "and")
         cli::cli_abort("Primary key(s) { missing_pkeys } is/are missing")
@@ -56,7 +56,7 @@ check_fields_pkeys <- function(con, tbl, fields){
 check_fields_notnulls <- function(con, tbl, fields){
     notnulls <- get_tbl_notnulls(con, tbl = tbl)
     
-    if(!all(notnulls %in% names(fields))){
+    if(!all(notnulls %in% fields)){
         missing_fields <- notnulls[which(!notnulls %in% fields)] |>
             glue::glue_collapse(", ", last = "and")
         cli::cli_abort("{ missing_fields } cannot be null(s)")
