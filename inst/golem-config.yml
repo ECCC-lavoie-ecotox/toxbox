@@ -1,0 +1,20 @@
+default:
+  golem_name: toxbox
+  golem_version: 0.0.0.9000
+  app_prod: no
+  tables:
+    reference_tables:
+    - project
+    - sites
+    - report
+    - species
+    - analyte
+    field_tables: field_sample
+    lab_tables:
+    - lab_sample
+    - lab_field_sample
+    - lab_measurement
+production:
+  app_prod: yes
+dev:
+  golem_wd: !expr golem::pkg_path()
