@@ -4,7 +4,7 @@
     <loc>/404.html</loc>
   </url>
   <url>
-    <loc>/LICENSE-text.html</loc>
+    <loc>/LICENSE.html</loc>
   </url>
   <url>
     <loc>/articles/censored_value.html</loc>
@@ -17,6 +17,9 @@
   </url>
   <url>
     <loc>/index.html</loc>
+  </url>
+  <url>
+    <loc>/news/index.html</loc>
   </url>
   <url>
     <loc>/reference/bulk_insert_entry.html</loc>
@@ -40,6 +43,9 @@
     <loc>/reference/detect_cens.html</loc>
   </url>
   <url>
+    <loc>/reference/fct_start.html</loc>
+  </url>
+  <url>
     <loc>/reference/get_tbl_info.html</loc>
   </url>
   <url>
@@ -59,6 +65,9 @@
   </url>
   <url>
     <loc>/reference/remove_cens.html</loc>
+  </url>
+  <url>
+    <loc>/reference/run_app.html</loc>
   </url>
   <url>
     <loc>/reference/search_tbl.html</loc>
