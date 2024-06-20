@@ -7,58 +7,34 @@
 app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources()
-
+    shinyjs::useShinyjs()
     bslib::page_sidebar(
-      title="Contaminant's database editor",
       window_title = "contaminR",
       theme = bslib::bs_theme(
-          "bslib-dashboard-design" = "false",
-          bootswatch = "minty",
+          bootswatch = "zephyr",
+          base_font = bslib::font_google("Poppins"),
           version = 5
+      ),
+      div(class = "col-auto d-none d-lg-block",
+        img(class="img-fluid text-left d-inline", src="www/logo.png",height="100", width="100"),
+        h3("ContaminR", class="d-inline", style="font-weight:bold;"),
+        p("Database editor", class ="text-muted d-inline m-3")
       ),
       sidebar = bslib::sidebar(
         position = "left",
         actionButton("dashboard",
-          class = "btn btn-outline-primary btn-sm",
+          class = "btn btn-success",
           label = "Dashboard",
           icon = icon("gauge")
         ),
         actionButton("documentation",
-          class = "btn btn-outline-primary btn-sm",
+          class = "btn btn-success",
           label = "Documentation",
           icon = icon("book")
         ),
-        bslib::accordion(
-          bslib::accordion_panel(
-            "Reference tables", icon = bsicons::bs_icon("database-fill"),
-            lapply(get_golem_config("tables")$reference_tables, \(b){
-              actionButton(paste0("table-nav-",b),
-                class = "btn btn-outline-primary btn-sm m-1",
-                label = stringr::str_to_title(b)
-              )
-            })
-          ),
-          bslib::accordion_panel(
-            "Field", icon = bsicons::bs_icon("feather"),
-            lapply(get_golem_config("tables")$field_tables, \(b){
-              actionButton(paste0("table-nav-",b),
-                class = "btn btn-outline-primary btn-sm m-1",
-                label = stringr::str_to_title(b)
-              )
-            })
-          ),
-          bslib::accordion_panel(
-            "Laboratory", icon = bsicons::bs_icon("menu-app"),
-            lapply(get_golem_config("tables")$lab_tables, \(b){
-              actionButton(paste0("table-nav-",b),
-                class = "btn btn-outline-primary btn-sm m-1",
-                label = stringr::str_to_title(b)
-              )
-            })
-          )
-        )
+        mod_table_nav_ui("table_nav")
       ),
-      mod_table_view_ui("selected-tab")
+      mod_table_view_ui("table_viewer")
     )
 }
 

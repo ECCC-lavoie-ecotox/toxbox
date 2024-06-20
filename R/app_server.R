@@ -7,12 +7,9 @@
 app_server <- function(input, output, session) {
   # Your application server logic
   r <- reactiveValues(
-    activeTable = "species"
+    active_table = "species"
   )
 
-  observeEvent(input$`table-nav-sites`, {
-    r$activeTable = "sites"
-  })
-
-  mod_table_view_server("selected-tab", r)
+  mod_table_view_server("table_viewer", r)
+  mod_table_nav_server("table_nav", r)
 }

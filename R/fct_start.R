@@ -8,6 +8,6 @@ fct_start <- function() {
 }
 
 clean_up_app <- function() {
-    cli::cli_alert_info("Application stopped -- cleaning up")
+    cli::cli_alert_info("Application stopped -- cleaning database connexion")
     DBI::dbDisconnect(con)
 }
