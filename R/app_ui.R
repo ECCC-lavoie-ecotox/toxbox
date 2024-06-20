@@ -5,14 +5,37 @@
 #' @import shiny
 #' @noRd
 app_ui <- function(request) {
-  tagList(
     # Leave this function for adding external resources
-    golem_add_external_resources(),
-    # Your application UI logic
-    fluidPage(
-      h1("toxbox")
+    golem_add_external_resources()
+    shinyjs::useShinyjs()
+    bslib::page_sidebar(
+      window_title = "contaminR",
+      theme = bslib::bs_theme(
+          bootswatch = "zephyr",
+          base_font = bslib::font_google("Poppins"),
+          version = 5
+      ),
+      div(class = "col-auto d-none d-lg-block",
+        img(class="img-fluid text-left d-inline", src="www/logo.png",height="100", width="100"),
+        h3("ContaminR", class="d-inline", style="font-weight:bold;"),
+        p("Database editor", class ="text-muted d-inline m-3")
+      ),
+      sidebar = bslib::sidebar(
+        position = "left",
+        actionButton("dashboard",
+          class = "btn btn-success",
+          label = "Dashboard",
+          icon = icon("gauge")
+        ),
+        actionButton("documentation",
+          class = "btn btn-success",
+          label = "Documentation",
+          icon = icon("book")
+        ),
+        mod_table_nav_ui("table_nav")
+      ),
+      mod_table_view_ui("table_viewer")
     )
-  )
 }
 
 #' Add external Resources to the Application
@@ -36,6 +59,4 @@ golem_add_external_resources <- function() {
       app_title = "toxbox"
     )
   )
-
-  mod_test_ui("test_1")
 }

@@ -1,6 +1,6 @@
 # Config FUNCTIONS
-db_path <- function() "inst/dbs"
-db_name <- function() "portal_mammals.sqlite"
+db_path <- function() "Z:/07-Données BD/Database/"
+db_name <- function() "contaminants-rlavoie-eccc.sqlite"
 
 # sqliteSetBusyHandler(dbObj, handler)
 
