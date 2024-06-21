@@ -7,7 +7,6 @@
 app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources()
-    shinyjs::useShinyjs()
     bslib::page_sidebar(
       window_title = "contaminR",
       theme = bslib::bs_theme(
