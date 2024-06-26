@@ -7,33 +7,44 @@
 app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources()
-    bslib::page_sidebar(
+    bslib::page_navbar(
+      id = "page",
       window_title = "contaminR",
+      title = a(class="navbar-brand",
+          img(
+            src = "www/logo.png",
+            width = "80px"
+          )),
       theme = bslib::bs_theme(
-          bootswatch = "zephyr",
-          base_font = bslib::font_google("Poppins"),
+          bootswatch = "default",
           version = 5
       ),
-      div(class = "col-auto d-none d-lg-block",
-        img(class="img-fluid text-left d-inline", src="www/logo.png",height="100", width="100"),
-        h3("ContaminR", class="d-inline", style="font-weight:bold;"),
-        p("Database editor", class ="text-muted d-inline m-3")
+      bslib::nav_panel("Dashboard", icon = shiny::icon("gauge")),
+      bslib::nav_panel(
+        "Search and export", 
+        icon = shiny::icon("magnifying-glass"),
+        mod_search_ui("search")
       ),
-      sidebar = bslib::sidebar(
-        position = "left",
-        actionButton("dashboard",
-          class = "btn btn-success",
-          label = "Dashboard",
-          icon = icon("gauge")
-        ),
-        actionButton("documentation",
-          class = "btn btn-success",
-          label = "Documentation",
-          icon = icon("book")
-        ),
-        mod_table_nav_ui("table_nav")
+      bslib::nav_panel("View and edit tables", 
+        icon = shiny::icon("table"),
+        bslib::card(
+          full_screen = TRUE,
+          bslib::layout_sidebar(
+            sidebar = bslib::sidebar(
+              mod_nav_tables_ui("table_nav"),
+              open = "always"
+            ), 
+            mod_table_view_ui("table_viewer"))
+        )
       ),
-      mod_table_view_ui("table_viewer")
+      bslib::nav_panel("Import data",  icon = shiny::icon("upload")),
+      bslib::nav_spacer(),
+      bslib::nav_menu(
+        "Documentation",
+        icon = shiny::icon("book"),
+        bslib::nav_item("R package"),
+        bslib::nav_item("How this database has been build?"),
+      )
     )
 }
 
