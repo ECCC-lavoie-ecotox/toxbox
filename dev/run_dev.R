@@ -2,7 +2,7 @@
 options(golem.app.prod = FALSE) # TRUE = production mode, FALSE = development mode
 
 # Comment this if you don't want the app to be served on a random port
-options(shiny.port = httpuv::randomPort())
+options(shiny.port = 5000)
 
 # Detach all loaded packages and clean your environment
 golem::detach_all_attached()
@@ -12,4 +12,4 @@ golem::detach_all_attached()
 golem::document_and_reload()
 
 # Run the application
-run_app(options = list(port = 5000))
+run_app()
