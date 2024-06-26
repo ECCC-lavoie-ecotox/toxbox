@@ -18,3 +18,24 @@ devtools::install_github("ECCC-lavoie-ecotox/toxbox")
 
 All functions are documented at this address: https://eccc-lavoie-ecotox.github.io/toxbox
 
+## Reloading a Shiny application on source changes
+
+Install the following aptitude libraries
+
+```bash
+sudo apt-get install ruby
+sudo apt-get install ruby-dev
+sudo gem install bundler
+```
+
+Install gems
+
+```bash
+bundle install
+```
+
+Start application and watch files in R folder
+
+```bash
+bundle exec guard
+```
