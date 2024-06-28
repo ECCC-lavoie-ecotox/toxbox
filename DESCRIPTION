@@ -31,6 +31,7 @@ Imports:
     RSQLite (>= 2.3.5),
     reactable (>= 0.4.4),
     shiny (>= 1.8.0),
+    shinyWidgets (>= 0.8.6),
     stringr (>= 1.5.1),
     tidyselect (>= 1.2.1)
 Suggests: 

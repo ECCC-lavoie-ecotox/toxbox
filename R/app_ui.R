@@ -38,12 +38,15 @@ app_ui <- function(request) {
         )
       ),
       bslib::nav_panel("Import data",  icon = shiny::icon("upload")),
-      bslib::nav_spacer(),
       bslib::nav_menu(
         "Documentation",
         icon = shiny::icon("book"),
-        bslib::nav_item("R package"),
-        bslib::nav_item("How this database has been build?"),
+        bslib::nav_item(tags$a("R package")),
+        bslib::nav_item(tags$a("How this database has been build?")),
+      ),
+      tags$head(
+        tags$style(".card{ overflow: visible !important; }"),
+        tags$style(".card-body{ overflow: visible !important; }")
       )
     )
 }
