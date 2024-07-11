@@ -95,7 +95,7 @@ mod_search_ui <- function(id){
               div(
                 class = "row",
                 div(class = "col-md-8",
-                  "Merge tables?"
+                  "Simplify view"
                 ),
                 div(class = "col-md-4",
                   shinyWidgets::materialSwitch(
@@ -128,7 +128,7 @@ mod_search_ui <- function(id){
             class = "bg-dark d-flex justify-content-between align-items-center"
           ),
           bslib::card_body(
-            reactable::reactableOutput(ns("data")) |> shinycssloaders::withSpinner()
+            reactable::reactableOutput(ns("data"))
           )
         )
       )
@@ -176,11 +176,11 @@ mod_search_server <- function(id) {
     observeEvent(input$search_by, {
       if (input$search_by == "family") {
         output$compound <- renderUI({
-          selectInput(ns("family_compound"), "Family compounds", choices = as.character(db$data$analyte$family), multiple = TRUE, width = "70%")
+          selectInput(ns("family_compound"), "Family compounds", choices = unique(as.character(get_tbl(con, "analyte")$family)), multiple = TRUE, width = "70%")
         })
       } else {
         output$compound <- renderUI({
-          selectInput(ns("compound"), "Specific compounds", choices = unique(as.character(db$data$analyte$name)), multiple = TRUE, width = "70%")
+          selectInput(ns("compound"), "Specific compounds", choices = as.character(get_tbl(con, "analyte")$name), multiple = TRUE, width = "70%")
         })
       }
     })
@@ -201,17 +201,6 @@ mod_search_server <- function(id) {
     })
       
     observeEvent(input$apply_filter_fields, {
-      gen_query <- dplyr::tbl(
-        con, dplyr::sql("
-            SELECT * FROM lab_measurement
-              LEFT JOIN analyte AS anal USING (id_analyte)
-              LEFT JOIN lab_sample USING (id_lab_sample)
-              LEFT JOIN lab_field_sample USING (id_lab_sample)
-              LEFT JOIN field_sample USING (id_field_sample)
-              LEFT JOIN report USING (id_report)
-              LEFT JOIN project USING (id_project)
-              LEFT JOIN species USING (id_species)")
-      )
 
       # Set criterias
       ccond <- list(
@@ -232,7 +221,7 @@ mod_search_server <- function(id) {
         unname()
 
       # Execute textual criterias
-      tmp_db <- gen_query |>
+      tmp_db <- get_db_cached(con) |>
         dplyr::filter(!!!ccond) |>
         dplyr::collect()
 
