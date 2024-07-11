@@ -2,10 +2,10 @@
 % Please edit documentation in R/fct_search.R
 \name{get_db}
 \alias{get_db}
-\title{Start function}
+\title{Get full database to cascade filter}
 \usage{
 get_db(con = NULL)
 }
 \description{
-Start function
+Get full database to cascade filter
 }

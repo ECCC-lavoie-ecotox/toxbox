@@ -2,10 +2,10 @@
 % Please edit documentation in R/fct_search.R
 \name{get_db_cached}
 \alias{get_db_cached}
-\title{Start function}
+\title{Get full database cached}
 \usage{
 get_db_cached(con = NULL)
 }
 \description{
-Start function
+Get full database cached
 }
