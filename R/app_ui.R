@@ -6,6 +6,8 @@
 #' @noRd
 app_ui <- function(request) {
     # Leave this function for adding external resources
+    waiter::useWaiter()
+    waiter::waiterPreloader()
     golem_add_external_resources()
     bslib::page_navbar(
       id = "page",

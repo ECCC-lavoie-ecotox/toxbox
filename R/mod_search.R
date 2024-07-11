@@ -10,6 +10,11 @@
 mod_search_ui <- function(id){
   ns <- NS(id)
   tagList(
+    waiter::useWaiter(),
+    waiter::waiterShowOnLoad(html = tagList(
+      waiter::spin_inner_circles(),
+      h5("Data fetching..."),
+    )),
     bslib::page_fillable(
       bslib::layout_column_wrap(
         fill = FALSE,
@@ -145,14 +150,20 @@ mod_search_server <- function(id) {
     tables <- get_golem_config("tables") |>
       unlist() |>
       unname()
-    
-    init_datasets <- function(){  
-        lapply(tables, \(x) dplyr::tbl(con, x) |> dplyr::collect()) |>
-          setNames(tables)
+
+    init_datasets <- function() {
+      lapply(tables, \(x) dplyr::tbl(con, x) |> dplyr::collect()) |>
+        setNames(tables)
     }
 
     db <- reactiveValues(data = init_datasets(), simplified = NULL)
 
+    w <- waiter::Waiter$new(html = tagList(
+      waiter::spin_inner_circles(),
+      h5("Data filtering...")
+    ))
+
+    ### Map section
     sites_sf <- get_tbl(con, "sites") |>
       dplyr::filter(!is.na(lat) & !is.na(lon)) |>
       sf::st_as_sf(coords = c("lon", "lat"), crs = sf::st_crs(4326), remove = FALSE)
@@ -187,7 +198,7 @@ mod_search_server <- function(id) {
 
     observe({
       nRes <- nrow(db$data$lab_measurement)
-      if ( nRes == 0 ) {
+      if (nRes == 0) {
         showNotification(
           glue::glue("Found { nRes } measurements with these criterias."),
           type = "warning"
@@ -199,9 +210,9 @@ mod_search_server <- function(id) {
         )
       }
     })
-      
-    observeEvent(input$apply_filter_fields, {
 
+    observeEvent(input$apply_filter_fields, {
+      w$show()
       # Set criterias
       ccond <- list(
         vernacular_en = input$species,
@@ -225,7 +236,7 @@ mod_search_server <- function(id) {
         dplyr::filter(!!!ccond) |>
         dplyr::collect()
 
-      # Execute date range criterias
+      # Execute date range criterias w$hide()
       if (length(input$sampling_range) == 2) {
         tmp_db <- tmp_db |>
           dplyr::mutate(collection_date = as.Date(collection_date)) |>
@@ -234,10 +245,11 @@ mod_search_server <- function(id) {
 
       # Split large db to original
       db$data <- purrr::map(tables, \(t){
-          cn <- get_tbl_info(con, t)$name
-          dplyr::select(tmp_db, any_of(cn)) |> dplyr::distinct()
+        cn <- get_tbl_info(con, t)$name
+        dplyr::select(tmp_db, any_of(cn)) |> dplyr::distinct()
       }) |> setNames(tables)
-    
+
+      w$hide()
     })
 
     output$data <- reactable::renderReactable({
@@ -247,4 +259,7 @@ mod_search_server <- function(id) {
       )
     })
   })
+  
+  waiter::waiter_hide()
+
 }
