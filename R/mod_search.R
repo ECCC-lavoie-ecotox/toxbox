@@ -83,7 +83,7 @@ mod_search_ui <- function(id){
               ),
               div(
                 class = "row",
-                sliderInput(ns("sampling_range"), "Sampling period", min = min(as.Date(get_tbl(con, "field_sample")$collection_date), na.rm = TRUE), max = max(as.Date(get_tbl(con, "field_sample")$collection_date), na.rm = TRUE), value = c(min(as.Date(get_tbl(con, "field_sample")$collection_date), na.rm = TRUE), max(as.Date(get_tbl(con, "field_sample")$collection_date), na.rm = TRUE)), width = "100%")
+                sliderInput(ns("sampling_range"), "Sampling period", min = min(as.Date(get_tbl(con, "field_sample")$collection_date, format = "%Y"), na.rm = TRUE), max = max(as.Date(get_tbl(con, "field_sample")$collection_date, format = "%Y"), na.rm = TRUE), value = c(min(as.Date(get_tbl(con, "field_sample")$collection_date, format = "%Y"), na.rm = TRUE), max(as.Date(get_tbl(con, "field_sample")$collection_date, , format = "%Y"), na.rm = TRUE)), width = "100%", timeFormat="%Y")
               )
             )
           )
@@ -253,13 +253,87 @@ mod_search_server <- function(id) {
     })
 
     output$data <- reactable::renderReactable({
-      reactable::reactable(
-        db$data$lab_measurement,
-        resizable = TRUE
-      )
-    })
-  })
-  
-  waiter::waiter_hide()
+      tmp <- db$data$lab_measurement |>
+        dplyr::left_join(
+          dplyr::select(
+            db$data$analyte, id_analyte, name, unit, is_dry_weight, on_isolated_lipid
+          ),
+          by = "id_analyte"
+        ) |>
+        dplyr::left_join(
+          dplyr::select(
+            db$data$lab_field_sample, id_lab_sample, id_field_sample
+          ),
+          by = "id_lab_sample"
+        ) |>
+        dplyr::left_join(
+          dplyr::select(
+            db$data$field_sample, id_field_sample, id_site, id_species, age, tissue, collection_date
+          ),
+          by = "id_field_sample"
+        ) |>
+        dplyr::left_join(
+          dplyr::select(
+            db$data$species, id_species, vernacular_en
+          ),
+          by = "id_species"
+        ) |>
+        dplyr::group_by(across(c(-id_field_sample))) |>
+        tidyr::nest() |>
+        dplyr::rename(field_samples = data) |>
+        dplyr::ungroup() 
+      
+      table1 <- tmp |>
+        dplyr::select(
+          Species = vernacular_en,
+          id_species,
+          Site = id_site,
+          date = collection_date,
+          Contaminant = name,
+          Unit = unit,
+          Value = value, 
+          `% Lipid` = percent_lipid,
+          `% Moisture` = percent_moisture,
+          `Censored value?` = is_censored
+        )
+      
+      reactable::reactable(table1, defaultPageSize = 100)
 
+      # orange_pal <- function(x) rgb(colorRamp(c("#ffe4cc", "#ffb54d"))(x), maxColorValue = 255)
+
+      # reactable::reactable(
+      #   table1,
+      #   columns = list(
+      #     nMeas = reactable::colDef(
+      #       name = "Count measurements",
+      #       style = function(value) {
+      #         normalized <- (value - min(table1$nMeas)) / (max(table1$nMeas) - min(table1$nMeas))
+      #         color <- orange_pal(normalized)
+      #         list(background = color)
+      #       }
+      #     ),
+      #     nTrunc = reactable::colDef(
+      #       name = "Count truncated",
+      #       style = function(value) {
+      #         normalized <- (value - min(table1$nTrunc)) / (max(table1$nTrunc) - min(table1$nTrunc))
+      #         color <- orange_pal(normalized)
+      #         list(background = color)
+      #       }
+      #     ),
+      #     Species = reactable::colDef(
+      #       cell = function(species, idx){
+      #         return(paste0(species, " (", table1$id_species[idx] ,")"))
+      #       }
+      #     ),
+      #     id_species = reactable::colDef(show = FALSE)
+      #   ),
+      #   defaultPageSize = 100
+      # )
+
+      # Table Digest - Tableau 2: Site, espèces, id_lab_sample, field_sample, contaminants in col
+      # Fig with panel: Select site / species / contaminants = frequence histogramme
+    })
+
+    waiter::waiter_hide()
+  })
 }
