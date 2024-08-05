@@ -1,0 +1,139 @@
+---
+title: "Importation des résultats de laboratoire dans la base de données intégrée"
+author: "Steve Vissault"
+date: "2024-08-01"
+output: 
+  html_document:
+    highlight: kate
+    toc: no
+---
+
+# Faire une sauvegarde de la base de données
+
+Ca pourrait être utile si une erreur est faite.
+
+```{r}
+db_path <- "Z:/07-Données BD/Database/contaminants-rlavoie-eccc.sqlite"
+
+db_bak <- stringr::str_replace(
+    db_path, 
+    pattern = ".sqlite", 
+    replacement = glue::glue("-{format(Sys.Date(), '%Y%m%d')}.bak.sqlite")
+)
+
+file.copy(db_path, db_bak)
+```
+
+# Chargements des résultats du laboratoire
+
+```{r}
+lab_results_file <- "Z:/07-Données BD/DBs-to-integrate/MET-THg-23-19 - RALA01-2023.xlsx"
+
+# Informations sur les échantillons
+sampleInfoLab <- readxl::read_xlsx(lab_results_file, "SampleInfo")
+
+# Informations sur les mesures
+measurementsLab <- readxl::read_xlsx(lab_results_file, "SampleData") 
+```
+
+# Connection à la base de données
+
+```{r}
+con <- toxbox::init_con()
+```
+
+# Préparation des données sur les échantillons
+
+```{r}
+field_sample <- sampleInfoLab |> dplyr::select(
+    id_lab_sample = SampleID,
+    id_field_sample = ClientID,
+    collection_date = CollectionDate,
+    id_site = Location,
+    id_species = Species,
+    tissue = Tissue,
+    age = Age
+)
+```
+
+# Préparation des données sur les mesures
+
+```{r}
+measurements <- measurementsLab |> dplyr::select(
+    id_lab_sample = SampleID,
+    id_field_sample = ClientID,
+    pmoisture = `% Moisture`,
+    value = `Total Mercury (µg/g (dry))`
+) |> dplyr::mutate(
+    id_analyte = "thg_dw"
+)
+```
+
+# Établir la correspondance avec les sites existants dans la base de données
+
+On valide si le ou les site(s) de collecte des échantillons existent dans la base de données
+
+On isole dans un premier temps les sites présent dans les résultats envoyés par le laboratoire.
+
+```{r}
+(sitesLab <- dplyr::distinct(sampleInfo, Location, Latitude, Longitude))
+```
+
+On recherche dans la base de données les sites à l'aide de mots clés.
+
+```{r}
+betchouanes_site_db <- toxbox::search_tbl(con, "sites", id_site = "%betchouanes%")
+mingan_site_db <- toxbox::search_tbl(con, "sites", id_site = "%mingan%")
+```
+
+Après avoir chercher les sites dans la base de données, nous pouvons nous apercevoir que le site de betchouanes est déjà renseigné dans la base de données mais pas le site de Longue-Pointe-de-Mingan. On ajoute donc ce site.
+
+```{r}
+add_site <- sitesLab |> 
+    dplyr::filter(Location == "Longue-Pointe-de-Mingan") |> 
+    dplyr::select(
+        id_site = Location,
+        lat = Latitude,
+        lon = Longitude
+    ) |>
+    dplyr::mutate(
+        province = 'Québec',
+        srid = 4326
+    )
+
+DBI::dbWriteTable(con, "sites", add_site, append = TRUE)
+```
+
+On vérifie que le site a bel et bien été ajouté dans la base de données.
+
+```{r}
+search_tbl(con, "sites", id_site = "Longue-Pointe-de-Mingan")
+```
+
+```{r}
+field_sample <- field_sample |>
+    dplyr::mutate(
+        id_site = dplyr::case_when(
+            stringr::str_detect(id_site, "Ile a Calculot des Betchouanes") == TRUE ~ betchouanes_site_db$id_site,
+            .default = id_site
+        )
+    )
+``` 
+
+# Établir la correspondance avec les espèces présentes dans la base de données
+
+On liste les espèces en premier les espèces présente dans les résultats de laboratoire.
+
+```{r}
+species <- data.frame(org_species = unique(field_sample$id_species)) |>
+    dplyr::mutate(
+        species_id = dplyr::case_when(
+            stringr::str_detect(id_site, "Ile a Calculot des Betchouanes") == TRUE ~ betchouanes_site_db$id_site,
+            .default = id_site
+        )
+    )
+```
+
+```{r}
+
+```
