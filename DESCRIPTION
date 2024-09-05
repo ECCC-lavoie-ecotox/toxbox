@@ -36,6 +36,7 @@ Imports:
     tidyselect (>= 1.2.1)
 Suggests: 
     knitr,
+    readxl (>= 1.4.3),
     mockery (>= 0.4.4),
     rmarkdown,
     testthat (>= 3.0.0),
