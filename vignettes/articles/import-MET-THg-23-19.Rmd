@@ -1,5 +1,5 @@
 ---
-title: "FR - Importation des résultats de laboratoire MET-THg-23-19"
+title: "Importation des résultats de laboratoire MET-THg-23-19"
 author: "Steve Vissault"
 date: "2024-08-01"
 output: 
@@ -8,7 +8,15 @@ output:
     toc: no
 ---
 
+```{r}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+Ce document permet d'importer les mesures de laboratoire pour le rapport MET-Thg-23-19
+
 # Faire une sauvegarde de la base de données
+
+Première étape, on veut être en mesure de restaurer la base de données si l'importation introduit des erreurs dans la base de données.
 
 ```{r}
 db_path <- "Z:/07-Données BD/Database/contaminants-rlavoie-eccc.sqlite"
