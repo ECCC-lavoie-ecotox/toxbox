@@ -1,81 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>/articles/censored_value.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/news/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/bulk_insert_entry.html</loc>
-  </url>
-  <url>
-    <loc>/reference/bulk_insert_test.html</loc>
-  </url>
-  <url>
-    <loc>/reference/censored_data.html</loc>
-  </url>
-  <url>
-    <loc>/reference/check_fields_exist.html</loc>
-  </url>
-  <url>
-    <loc>/reference/check_fields_notnulls.html</loc>
-  </url>
-  <url>
-    <loc>/reference/check_fields_pkeys.html</loc>
-  </url>
-  <url>
-    <loc>/reference/detect_cens.html</loc>
-  </url>
-  <url>
-    <loc>/reference/fct_start.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_tbl_info.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_tbl_notnulls.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_tbl_pkeys.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/init_con.html</loc>
-  </url>
-  <url>
-    <loc>/reference/insert_entry.html</loc>
-  </url>
-  <url>
-    <loc>/reference/remove_cens.html</loc>
-  </url>
-  <url>
-    <loc>/reference/run_app.html</loc>
-  </url>
-  <url>
-    <loc>/reference/search_tbl.html</loc>
-  </url>
-  <url>
-    <loc>/reference/tbl_info_test.html</loc>
-  </url>
-  <url>
-    <loc>/reference/uncensored.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE.html</loc></url>
+<url><loc>/articles/censored_value.html</loc></url>
+<url><loc>/articles/import-MET-THg-23-19.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/bulk_insert_entry.html</loc></url>
+<url><loc>/reference/bulk_insert_test.html</loc></url>
+<url><loc>/reference/censored_data.html</loc></url>
+<url><loc>/reference/check_fields_exist.html</loc></url>
+<url><loc>/reference/check_fields_notnulls.html</loc></url>
+<url><loc>/reference/check_fields_pkeys.html</loc></url>
+<url><loc>/reference/detect_cens.html</loc></url>
+<url><loc>/reference/fct_start.html</loc></url>
+<url><loc>/reference/get_db.html</loc></url>
+<url><loc>/reference/get_db_cached.html</loc></url>
+<url><loc>/reference/get_tbl_info.html</loc></url>
+<url><loc>/reference/get_tbl_notnulls.html</loc></url>
+<url><loc>/reference/get_tbl_pkeys.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/init_con.html</loc></url>
+<url><loc>/reference/insert_entry.html</loc></url>
+<url><loc>/reference/remove_cens.html</loc></url>
+<url><loc>/reference/run_app.html</loc></url>
+<url><loc>/reference/search_tbl.html</loc></url>
+<url><loc>/reference/tbl_info_test.html</loc></url>
+<url><loc>/reference/uncensored.html</loc></url>
 </urlset>
+
