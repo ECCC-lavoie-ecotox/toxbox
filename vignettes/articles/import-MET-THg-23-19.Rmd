@@ -229,7 +229,11 @@ dplyr::select(field_sample, id_lab_sample, id_field_sample) |>
 ## Lab measurements
 
 ```{R}
-dplyr::select(measurements, id_lab_sample, id_analyte, value, is_censored = 0, percent_moisture = pmoisture) |> 
+# Set method detection limit
+MDL <- 0.0001
+
+dplyr::select(measurements, id_lab_sample, id_analyte, value, percent_moisture = pmoisture) |> 
+    dplyr::mutate(is_censored = ifelse(value > MDL, 0, 1)) |>
     dplyr::mutate(id_report = report$id_report) |> 
     (\(data) DBI::dbWriteTable(con, "lab_measurement", data, append = TRUE))()
 ```
